@@ -1,4 +1,11 @@
 
+/* Required packages
+├── express@4.14.0
+├── plotly.js@1.21.3
+├── socket.io@1.4.8
+└── zmq@2.15.3
+*/
+
 var DEVICE_ID = 200;
 var BROADCAST_ID = 255;
 
