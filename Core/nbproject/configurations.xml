@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="100">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+      <itemPath>/home/pi/Cpp/HomeControl/DeviceBME280.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/DeviceGeneric.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/DeviceManager.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/Log.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/PacketManager.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/PeriodicTimer.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/Rf24Server.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/Runnable.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/globalConstants.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/globals.h</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/mainLoop.h</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <itemPath>/home/pi/Cpp/HomeControl/DeviceBME280.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/DeviceGeneric.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/DeviceManager.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/Log.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/PacketManager.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/PeriodicTimer.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/Rf24Server.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/Runnable.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/main.cpp</itemPath>
+      <itemPath>/home/pi/Cpp/HomeControl/mainLoop.cpp</itemPath>
+    </logicalFolder>
+    <logicalFolder name="TestFiles"
+                   displayName="Test Files"
+                   projectFiles="false"
+                   kind="TEST_LOGICAL_FOLDER">
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
+    <itemPath>/home/pi/Cpp/HomeControl/Test.cpp</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/Test.h</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/gpio.c</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/gpio.h</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/includeAllDevices.h</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/nRF24L01.h</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/rf24.c</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/rf24.h</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/spi.c</itemPath>
+    <itemPath>/home/pi/Cpp/HomeControl/spi.h</itemPath>
+  </logicalFolder>
+  <sourceRootList>
+    <Elem>/home/pi/Cpp/HomeControl</Elem>
+    <Elem>/usr/include/c++/4.9.2</Elem>
+    <Elem>/usr/include/c++/4.9.2/experimental</Elem>
+    <Elem>/usr/local/lib</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <ccTool>
+          <stripSymbols>true</stripSymbols>
+          <standard>11</standard>
+          <incDir>
+            <pElem>/usr/local/lib</pElem>
+          </incDir>
+        </ccTool>
+        <linkerTool>
+          <output>/home/pi/HomeControl/homecontrol</output>
+          <commandLine>-I/usr/local/lib -L/usr/local/lib -lzmq -pthread</commandLine>
+        </linkerTool>
+      </compileType>
+      <item path="/home/pi/Cpp/HomeControl/DeviceBME280.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceBME280.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceGeneric.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceGeneric.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceManager.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceManager.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Log.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Log.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PacketManager.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PacketManager.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PeriodicTimer.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PeriodicTimer.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Rf24Server.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Rf24Server.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Runnable.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Runnable.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Test.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Test.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/globalConstants.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/globals.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/gpio.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/gpio.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/includeAllDevices.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/mainLoop.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/mainLoop.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/nRF24L01.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/rf24.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/rf24.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/spi.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/spi.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>true</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+        <asmTool>
+          <developmentMode>5</developmentMode>
+        </asmTool>
+      </compileType>
+      <item path="/home/pi/Cpp/HomeControl/DeviceBME280.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceBME280.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceGeneric.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceGeneric.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceManager.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/DeviceManager.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Log.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Log.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PacketManager.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PacketManager.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PeriodicTimer.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/PeriodicTimer.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Rf24Server.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Rf24Server.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Runnable.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Runnable.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Test.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/Test.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/globalConstants.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/globals.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/gpio.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/gpio.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/includeAllDevices.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/main.cpp" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/mainLoop.cpp"
+            ex="false"
+            tool="1"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/mainLoop.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/nRF24L01.h"
+            ex="false"
+            tool="3"
+            flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/rf24.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/rf24.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/spi.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="/home/pi/Cpp/HomeControl/spi.h" ex="false" tool="3" flavor2="0">
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>
