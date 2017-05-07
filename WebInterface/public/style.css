@@ -1,0 +1,119 @@
+
+/*colors
+grey 222930
+blue 4EB1BA
+white DDDDDD
+*/
+body{
+	background:url('bcg.png');
+	color:#DDDDDD;
+}
+
+#header {
+    background:transparent;/*url('bcg_black.png');*/
+    color:#4EB1BA;
+	font-family: Verdana;
+    text-align:center;
+    padding:1px;
+	border-width: 0px 0px 4px 0px;
+	border-color: #4EB1BA;
+	border-style: solid;
+}
+
+#device_list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    /*width: 25%;*/
+    background-color: white;
+    /*position: fixed;*/
+    height: 100%;
+	/*float:left;*/
+    /*overflow: auto;*/
+    width: 250px;
+}
+.device_in_list {
+    display: block;
+    transition-duration: 0.2s;
+	background-color: transparent;
+	color:#DDDDDD;
+	text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+	font-weight: bold;
+	font-family: Verdana;
+    padding: 6px 0 6px 15px;
+    text-decoration: none;
+	float: left;
+	cursor: pointer;
+	width:230px;
+	
+	border-style: solid;
+	border-width: 2px 4px 2px 4px;
+	/*overflow:none;*/
+}
+.device_in_list:last-child{
+	border-width: 2px 4px 4px 4px;
+}
+.device_in_list:first-child{
+	border-width: 0px 4px 2px 4px;
+}
+.device_in_list.selected{
+	border-color: #4EB1BA #4EB1BA #4EB1BA #4EB1BA;
+	
+}
+.device_in_list.unselected{
+	border-color: #4EB1BA #4EB1BA #4EB1BA transparent;
+}
+.device_in_list:hover {
+	/*background-color:#4EB1BA;*/
+	color:#4EB1BA;
+}
+
+
+#device_panel {
+	/*width:700px;*/
+    /*float:left;*/
+	
+    font-family: Verdana;
+	padding-left: 270px;
+	/*width:80%;*/
+}
+
+.button_onoff {
+    background-color: transparent; 
+    border: none;
+    color: #DDDDDD;
+	width: 150px;
+	height: 40px;
+    /*padding: 15px 32px;*/
+    text-align: center;
+	/*vertical-align: middle;*/
+    text-decoration: none;
+    display: inline-block;
+    font-size: 20px;
+	font-weight: bold;
+	border: 2px solid #4EB1BA; /* Green 4CAF50*/
+	transition-duration: 0.2s;
+	/*line-height: 50px;*/
+}
+.button_onoff:hover {
+	cursor: pointer;
+    color: #4EB1BA; /* Green */
+
+}
+.on{
+	border-color: #00ff00;
+}
+.off{
+	border-color: red;
+}
+.big_text{
+	color: #4EB1BA;
+	font-size: 250%;
+}
+/*
+<button id="device_1" class="but" type="button" onclick="onClickDeviceSelect(this.id)">Device1</button>
+</br>
+<button id="device_2" class="but" type="button" onclick="onClickDeviceSelect(this.id)">Device2</button>
+*/
