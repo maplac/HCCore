@@ -16,8 +16,8 @@
 #include <json.hpp>
 #include <sys/time.h>
 
-#define PATH_DATA "/home/pi/HomeControl/data/"
-#define PATH_DEVICES    "/home/pi/HomeControl/settings/"
+#define PATH_DATA       "/home/pi/HomeControl-Data/"
+#define PATH_DEVICES    "/home/pi/HomeControl-Config/"
 
 std::vector<std::string> split(const std::string& str, std::string delim);
 
