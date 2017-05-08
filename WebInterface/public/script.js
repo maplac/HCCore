@@ -94,6 +94,11 @@ socket.on('message', function(msg){
 						break;
 					case "BME280":
 						device_panel.innerHTML = DeviceBME280.createDevice(selectedDevice);
+						var msg = {};
+						msg.desId = selectedDevice.id;
+						msg.srcId = clientId;
+						msg.type = "pullDataBuffer";
+						socket.emit('message', msg);
 						break;
 					default : 
 						//device_panel.innerHTML = DeviceDHT22.createDevice(selectedDevice);
@@ -113,7 +118,7 @@ socket.on('message', function(msg){
 			break;
 		case "pushDataBuffer":
 			if (msg.srcId === selectedDevice.id){
-				DeviceBME280.newDataReceived(msg);
+				DeviceBME280.bufferReceived(msg);
 			}
 			break;
 		case "test":

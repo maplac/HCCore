@@ -32,7 +32,7 @@ var DeviceBME280 = {
 		document.getElementById('device_humidity').innerHTML = msg.data.humidity + "%";
 		document.getElementById('device_pressure').innerHTML = msg.data.pressure + " Pa";
 		document.getElementById('device_panel_last_connected').innerHTML = msg.lastConnected;
-		
+		/*
 		if (device.time.length > 15){
 			device.time.shift();
 			device.temperature.shift();
@@ -45,9 +45,30 @@ var DeviceBME280 = {
 		device.pressure.push(msg.data.pressure);
 		//console.log(device.temperature);
 		DeviceBME280.updateGraphs();
+		*/
+	},
+	
+	bufferReceived : function (msg){
+				
+		device.time = msg.data.time;
+		device.temperature = msg.data.temperature;
+		device.humidity = msg.data.humidity;
+		device.pressure = msg.data.pressure;
+		for (i = 0; i < device.time.length; i++) {
+			device.temperature[i] = device.temperature[i] / 10;
+		}
+		DeviceBME280.updateGraphs();
 	},
 	
 	updateGraphs : function (){
+		var max = Math.max(...device.temperature);
+		var min = Math.min(...device.temperature);
+		var mean = (max + min) / 2;
+		var deviation = mean / 20;
+		var yRange = [mean-deviation, mean+deviation];
+		if(min < yRange[0]){ yRange[0] = min*0.95;}
+		if(max > yRange[1]){ yRange[1] = max*1.05;}
+		// console.log(min+" "+max+" "+mean+" "+deviation);
 		var trace1 = {	
 			x: device.time,
 			y: device.temperature,
@@ -95,13 +116,21 @@ var DeviceBME280 = {
 				},
 				//overlaying: 'y',
 				//anchor: 'x',
-				side: 'right'
+				side: 'right',
+				range: yRange
 			}
 			
 			
 		};
 		Plotly.newPlot( document.getElementById('graph_temperature'), [trace1], layout1 );
 		
+		max = Math.max(...device.humidity);
+		min = Math.min(...device.humidity);
+		mean = (max + min) / 2;
+		deviation = mean / 20;
+		yRange = [mean-deviation, mean+deviation];
+		if(min < yRange[0]){ yRange[0] = min*0.95;}
+		if(max > yRange[1]){ yRange[1] = max*1.05;}
 		var trace2 = {	
 			x: device.time,
 			y: device.humidity,
@@ -153,12 +182,20 @@ var DeviceBME280 = {
 				//overlaying: 'y',
 				//anchor: 'free',
 				//position: 0.85,
-				side: 'right'
+				side: 'right',
+				range: yRange
 			}
 			
 		};
 		Plotly.newPlot( document.getElementById('graph_humidity'), data2, layout2 );
 		
+		max = Math.max(...device.pressure);
+		min = Math.min(...device.pressure);
+		mean = (max + min) / 2;
+		deviation = mean / 20;
+		yRange = [mean-deviation, mean+deviation];
+		if(min < yRange[0]){ yRange[0] = min*0.95;}
+		if(max > yRange[1]){ yRange[1] = max*1.05;}
 		var trace3 = {	
 			x: device.time,
 			y: device.pressure,
@@ -210,7 +247,8 @@ var DeviceBME280 = {
 				//overlaying: 'y',
 				//anchor: 'free',
 				//position: 0.85,
-				side: 'right'
+				side: 'right',
+				range: yRange
 			}
 			
 		};
