@@ -341,7 +341,7 @@ int DeviceBME280::removeOldReadouts() {
     timeBreak.tv_sec -= READOUTS_BUFFER_PERIOD;
 
     int deleted = 0;
-    LOG_I("timeBreak: " + timeToString(timeBreak));
+//    LOG_I("timeBreak: " + timeToString(timeBreak));
     for (int i = 0; i < readoutsBuffer.size(); i++) {
         if (timercmp(&timeBreak, &readoutsBuffer[i].time, >)) {
             //            LOG_I("removed: " + timeToString(readoutsBuffer[i].time));

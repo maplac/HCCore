@@ -184,7 +184,7 @@ int mainLoop(zmq::context_t &zmqContext) {
         if (zmqPollItems[0].revents && ZMQ_POLLIN) {
             std::string msgReceivedStr = s_recv(zmqSocketIn);
             json msgReceivedJson = json::parse(msgReceivedStr);
-            LOG_I("received web msg:\n" + msgReceivedJson.dump(3));
+            LOG_I("received web msg: " + msgReceivedJson.dump());
             int desId = msgReceivedJson["desId"];
 
             if (desId == THIS_DRIVER_ID) {

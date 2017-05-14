@@ -1,7 +1,6 @@
-
+//"use strict";
 var deviceList;
 var clientId = -1;
-var selectedDevice = {};
 var ID_BROADCAST = 255;
 
 var socket = io.connect();
@@ -12,6 +11,8 @@ var graph;
 var graph2;
 var tempe;
 var humi;
+var selectedDevice = new DeviceGeneric(-1, 'none');
+
 
 window.onload = function() {
 	
@@ -66,7 +67,6 @@ function onClickDeviceSelect(button){
 	// console.log(msg);
 	// socket.emit('message', msg);
 }
-
 // when packet with message arrives
 socket.on('message', function(msg){
 	// if (msg.desId !== clientId || msg.desId !== ID_BROADCAST){
@@ -78,7 +78,7 @@ socket.on('message', function(msg){
 		case "pushAllDevices":
 			var code = "";
 			var d;
-			for(i=0; i<msg.devices.length; i++){
+			for(var i=0; i<msg.devices.length; i++){
 				d=msg.devices[i]
 				code=code+'<li class="device_in_list unselected" id="device_'+d.id+'" onclick="onClickDeviceSelect(this)">'+d.name+'</li>';
 			}
@@ -87,13 +87,12 @@ socket.on('message', function(msg){
 		case "pushDevice":
 			var device = msg.device;
 			if (device.id === selectedDevice.id){
-				selectedDevice = device
 				switch(device.type){
 					case "switchOnOff" : 
-						device_panel.innerHTML = DeviceSwitchOnOff.createDevice(selectedDevice);
+
 						break;
 					case "BME280":
-						device_panel.innerHTML = DeviceBME280.createDevice(selectedDevice);
+						selectedDevice = new DeviceBME280(device.id);
 						var msg = {};
 						msg.desId = selectedDevice.id;
 						msg.srcId = clientId;
@@ -104,11 +103,13 @@ socket.on('message', function(msg){
 						//device_panel.innerHTML = DeviceDHT22.createDevice(selectedDevice);
 						console.log("msg pushDevice: unknown type")
 				}
+				selectedDevice.setParameters(device);
+				selectedDevice.createDevicePanel();
 			}
 			break;
 		case "pushNewData":
 			if (msg.srcId === selectedDevice.id){
-				DeviceBME280.newDataReceived(msg);
+				selectedDevice.newDataReceived(msg);
 				var msg = {};
 				msg.desId = selectedDevice.id;
 				msg.srcId = clientId;
@@ -118,7 +119,7 @@ socket.on('message', function(msg){
 			break;
 		case "pushDataBuffer":
 			if (msg.srcId === selectedDevice.id){
-				DeviceBME280.bufferReceived(msg);
+				selectedDevice.dataBufferReceived(msg);
 			}
 			break;
 		case "test":
