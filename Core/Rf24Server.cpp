@@ -105,7 +105,7 @@ void Rf24Server::run() {
             uint8_t val;
             read(gpioFd, &val, 1);
             lseek(gpioFd, 0, SEEK_SET);
-            char buf[32];
+            char buffer[32];
             uint8_t i, len, done;
 
             rf24_sync_status(&radio);
@@ -124,28 +124,23 @@ void Rf24Server::run() {
             if (radio.status.rx_data_available) {
                 len = radio.status.rx_data_len;
 
-                rf24_receive(&radio, &buf, len);
-                std::vector<char> data(buf,buf+32);
+                rf24_receive(&radio, &buffer, len);
+                std::vector<char> packet(buffer,buffer+32);
                 usleep(20);
                 rf24_reset_status(&radio);
 
-                //fprintf(stderr, "[rf24 pong callback] Data len: %d, data[0]: %d\n", len, buf[0]);
 
-                buf[1] = 65;
-                buf[2] = 0;
-                // fprintf(stderr, "buf[1]=%s", &buf[1]);
-
-                rf24_stop_listening(&radio);
-                rf24_send(&radio, &buf, 32 * sizeof (uint8_t));
-                rf24_start_listening(&radio);
+                //rf24_stop_listening(&radio);
+                //rf24_send(&radio, &buf, 32 * sizeof (uint8_t));
+                //rf24_start_listening(&radio);
 
                 
                 json msgTransmitJson = {
                     {"srcId", RF24SERVER_ID},
                     {"type", "dataReceived"},
-                    {"desId", buf[0]},
+                    {"desId", buffer[0]},
                     {"pipeIndex", radio.status.rx_data_pipe},
-                    {"data", json(data)},
+                    {"data", json(packet)},
                 };
 //                LOG_I(msgTransmitJson.dump(3));
                 s_send(zmqSocket, msgTransmitJson.dump());

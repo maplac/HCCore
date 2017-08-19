@@ -8,6 +8,7 @@
 #include "DeviceBME280.h"
 #define OBJECT_NAME "BME280"
 #include "Log.h"
+#include "PacketManager.h"
 
 #include <string>
 #include <sstream>
@@ -15,12 +16,15 @@
 #include <string.h> // for strerror
 #include <dirent.h>
 #include <unistd.h>
+#include <stdint.h>
 
-#define READOUTS_BUFFER_PERIOD 60//(12*60*60)
+#define READOUTS_BUFFER_PERIOD 600 // in seconds
 using json = nlohmann::json;
 
 DeviceBME280::DeviceBME280(int id, Interface interface) : DeviceGeneric(id, Type::BME280, interface) {
     status = "measuring";
+    packetCounter = -1;
+    lostReadouts = 0;
 }
 
 DeviceBME280::~DeviceBME280() {
@@ -38,6 +42,8 @@ int DeviceBME280::setParameter(const json &parameter) {
             lastReadout.pressure = parameter["pressure"];
         } else if (parameter.find("humidity") != parameter.end()) {
             lastReadout.humidity = parameter["humidity"];
+        } else if (parameter.find("voltage") != parameter.end()) {
+            lastReadout.humidity = parameter["voltage"];
         } else {
             return 0;
         }
@@ -52,6 +58,7 @@ nlohmann::json DeviceBME280::getDevice() {
     device["temperature"] = lastReadout.temperature;
     device["pressure"] = lastReadout.pressure;
     device["humidity"] = lastReadout.humidity;
+    device["voltage"] = lastReadout.voltage;
     return device;
 }
 
@@ -64,7 +71,7 @@ nlohmann::json DeviceBME280::getDevice() {
  *
  */
 int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json& reply) {
-    gettimeofday(&lastConnected, NULL);
+    
     std::string msgType = msg["type"];
     int srcId = msg["srcId"];
 
@@ -75,7 +82,7 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
         pipeIndex = msg["pipeIndex"];
         if (msgType.compare("dataReceived") == 0) {
 
-            // convert json data dot vector
+            // convert json data to vector
             if (msg.find("data") == msg.end()) {
                 LOG_E("processMsgFromDevice() message doesn't contain entry \"data\".");
                 return -1;
@@ -91,40 +98,75 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
                 LOG_E("processMsgFromDevice() data array is too short");
                 return -1;
             }
+            // if packet counter is zero, it goes from 255 to 1 (it skips 0)
+            if (data[1] == 0) {
+                LOG_I("processMsgFromDevice() Device started.");
+                packetCounter = 0;
+            } else {
 
-            // get readout from recived packet
-            float *dataF = (float*) &data;
-            lastReadout.temperature = round(dataF[1]*10);
-            lastReadout.pressure = round(dataF[2]);
-            lastReadout.humidity = round(dataF[3]);
-            lastReadout.time = lastConnected;
+                // if it is not the first received packet
+                if (packetCounter >= 0) {
+                    // increment packet counter
+                    packetCounter = (packetCounter + 1) % 256;
+                    if (packetCounter == 0) {
+                        packetCounter = 1;
+                    }
 
-            // push new readout to a queque that hold last values
-            while (readoutsBuffer.size() > 30) {
-                readoutsBuffer.pop_front();
+                    // if the packet counter does not match the received number
+                    if (packetCounter != data[1]) {
+                        LOG_E("processMsgFromDevice() packets lost: expected " + std::to_string(packetCounter) +
+                                ", received " + std::to_string(data[1]));
+                        uint32_t *dataUI32 = (uint32_t*) & data;
+                        LOG_E("processMsgFromDevice() total lost packets " + std::to_string(dataUI32[5]));
+                    }
+                }
+                packetCounter = data[1];
             }
-            readoutsBuffer.push_back(lastReadout);
+
+            gettimeofday(&lastConnected, NULL);
+            
+            // get readouts from received packet
+            float *dataF = (float*) &data;
+            lastReadout.temperature = dataF[1];
+            lastReadout.pressure = dataF[2];
+            lastReadout.humidity = dataF[3];
+            lastReadout.voltage = dataF[4];
+            lastReadout.time = lastConnected;
+            uint32_t *dataUI32 = (uint32_t*) & data;
+            lostReadouts = dataUI32[5];
+
+            // TODO change count to time
+            // push the new readouts to a queque that hold last values
+            //            while (readoutsBuffer.size() > 30) {
+            //                readoutsBuffer.pop_front();
+            //            }
+
+
 
             std::stringstream ss;
             ss << "temperature = " << lastReadout.temperature;
             ss << ", pressure = " << lastReadout.pressure;
             ss << ", humidity = " << lastReadout.humidity;
-            ss << ", time = " << timeToString(lastReadout.time);
+            ss << ", voltage = " << lastReadout.voltage;
+           // ss << ", time = " << timeToString(lastReadout.time);
             //            ss << ", local = " << timeToStringLocal(lastReadout.time);
             LOG_I(ss.str());
 
-            // create messager for web server
+            // create message for web server
             reply["type"] = "pushNewData";
-            reply["lastConnected"] = timeToString(lastConnected);
+            reply["lastConnected"] = timeToStringLocal(lastConnected);
             reply["data"] = {
                 {"temperature", lastReadout.temperature},
                 {"pressure", lastReadout.pressure},
                 {"humidity", lastReadout.humidity},
+                {"voltage", lastReadout.voltage},
                 {"time", timeToStringLocal(lastReadout.time)}
             };
 
+            readoutsBuffer.push_back(lastReadout);
             saveLastReadout();
             removeOldReadouts();
+            saveDeviceToFile();
         } else {
             LOG_E("processMsgFromGui() unknown type of message");
             return -1;
@@ -138,7 +180,7 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
 
 }
 
-int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json& reply) {
+int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & reply) {
 
     std::string msgType = msg["type"];
 
@@ -183,9 +225,9 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json& r
         std::vector<int> readoutsHumidity;
         std::vector<std::string> readoutsTime;
         for (int i = 0; i < readoutsBuffer.size(); i++) {
-            readoutsTemperature.push_back(readoutsBuffer[i].temperature);
-            readoutsHumidity.push_back(readoutsBuffer[i].humidity);
-            readoutsPressure.push_back(readoutsBuffer[i].pressure);
+            readoutsTemperature.push_back(round(readoutsBuffer[i].temperature*100));
+            readoutsHumidity.push_back(round(readoutsBuffer[i].humidity*100));
+            readoutsPressure.push_back(round(readoutsBuffer[i].pressure));
             readoutsTime.push_back(timeToStringLocal(readoutsBuffer[i].time));
         }
         reply["data"] = {
@@ -194,8 +236,8 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json& r
             {"humidity", readoutsHumidity},
             {"time", readoutsTime}
         };
-//        LOG_I("processMsgFromGui() data:\n" + reply["data"].dump(2));
-        
+        //        LOG_I("processMsgFromGui() data:\n" + reply["data"].dump(2));
+
 
     } else {
         LOG_E("processMsgFromGui() unknown type of message");
@@ -221,9 +263,10 @@ int DeviceBME280::saveLastReadout() {
         return -1;
     }
     fs << timeToString(lastReadout.time) << ", ";
-    fs << std::setprecision(4) << lastReadout.temperature << ", ";
-    fs << std::setprecision(5) << lastReadout.pressure << ", ";
-    fs << std::setprecision(2) << lastReadout.humidity << ", " << std::endl;
+    fs << std::setprecision(5) << lastReadout.temperature << ", ";
+    fs << std::setprecision(6) << lastReadout.pressure << ", ";
+    fs << std::setprecision(5) << lastReadout.humidity << ", ";
+    fs << std::setprecision(4) << lastReadout.voltage << ", " << std::endl;
     fs.close();
 
     return 1;
@@ -254,7 +297,7 @@ int DeviceBME280::loadReadoutsBuffer() {
         vector<string> cells = split(line, ",");
 
         // if the line is deformed skip it
-        if (cells.size() < 4) {
+        if (cells.size() < 5) {
             continue;
         }
 
@@ -281,7 +324,7 @@ int DeviceBME280::loadReadoutsBuffer() {
             vector<string> cells = split(line, ",");
 
             // if the line is deformed skip it
-            if (cells.size() < 4) {
+            if (cells.size() < 5) {
                 continue;
             }
 
@@ -309,9 +352,10 @@ DeviceBME280::readout DeviceBME280::stringToReadout(const std::vector<std::strin
     //    LOG_I("loaded time      : " + timeToString(r.time));
     //    LOG_I("loaded time local: " + timeToStringLocal(r.time));
 
-    r.temperature = stoi(cells[1]);
-    r.pressure = stoi(cells[2]);
-    r.humidity = stoi(cells[3]);
+    r.temperature = stof(cells[1]);
+    r.pressure = stof(cells[2]);
+    r.humidity = stof(cells[3]);
+    r.voltage = stof(cells[4]);
     return r;
 }
 
@@ -341,7 +385,7 @@ int DeviceBME280::removeOldReadouts() {
     timeBreak.tv_sec -= READOUTS_BUFFER_PERIOD;
 
     int deleted = 0;
-//    LOG_I("timeBreak: " + timeToString(timeBreak));
+    //    LOG_I("timeBreak: " + timeToString(timeBreak));
     for (int i = 0; i < readoutsBuffer.size(); i++) {
         if (timercmp(&timeBreak, &readoutsBuffer[i].time, >)) {
             //            LOG_I("removed: " + timeToString(readoutsBuffer[i].time));

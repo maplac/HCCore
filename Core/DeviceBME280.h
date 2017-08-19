@@ -39,12 +39,15 @@ public:
 private:
     typedef struct readout_tag {
         struct timeval time;
-        int temperature;
-        int pressure;
-        int humidity;
+        float temperature;
+        float pressure;
+        float humidity;
+        float voltage;
     }readout;
     readout lastReadout;
     std::deque<readout> readoutsBuffer;
+    int packetCounter;
+    unsigned int lostReadouts;
     
     int saveLastReadout();
     int removeOldReadouts();
