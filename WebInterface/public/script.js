@@ -7,10 +7,6 @@ var socket = io.connect();
 var device_list;
 var device_panel;
 var selected_device_in_list = -1;
-var graph;
-var graph2;
-var tempe;
-var humi;
 var selectedDevice = new DeviceGeneric(-1, 'none');
 
 
@@ -83,6 +79,12 @@ socket.on('message', function(msg){
 				code=code+'<li class="device_in_list unselected" id="device_'+d.id+'" onclick="onClickDeviceSelect(this)">'+d.name+'</li>';
 			}
 			device_list.innerHTML = code;
+			if (msg.devices.length > 0){
+				var id = msg.devices[0].id;
+				var button = {};
+				button.id = 'button_' + id;
+				onClickDeviceSelect(button);
+			}
 			break;
 		case "pushDevice":
 			var device = msg.device;
