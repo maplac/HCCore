@@ -1,0 +1,58 @@
+#!/bin/bash
+
+BINCORE=/home/pi/HomeControl/homecontrol
+BINLOGGER=/home/pi/HomeControl/logger
+
+function startCore {
+	
+	
+	PS=`ps -A | grep homecontrol`
+
+	if [ -n "$PS" ]; then
+		echo 'HomeControl-Core is already running'
+		echo $PS
+		exit 1
+	fi
+	echo 'Starting core '
+
+	stdbuf -oL $BINCORE daemon &> >($BINLOGGER)
+		
+	#PID='pgrep -n -x homecontrol'
+	#echo "$PID"
+	
+	#sleep 1
+}
+
+function stopCore {
+	echo 'Stopping core '
+	killall -INT homecontrol
+}
+
+function startWeb {
+	echo 'Starting webserver '
+}
+
+function stopWeb {
+	echo 'Stopping webserver '
+}
+
+
+case "$1" in
+  startcore)
+	startCore
+	;;
+  stopcore)
+	stopCore
+	;;
+  startweb)
+  startWeb
+	;;
+  stopweb)
+  stopWeb
+	;;
+  *)
+	echo $"Usage: $0 {startcore|stopcore|startweb|stopweb}"
+	exit 1
+esac
+
+exit 0
