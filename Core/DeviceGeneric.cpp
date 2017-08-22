@@ -81,6 +81,14 @@ int DeviceGeneric::setParameter(const json &parameter) {
         pipeIndex = parameter["pipeIndex"];
         return 1;
     }
+    if (parameter.find("interface") != parameter.end()) {
+        interface = intToInterface(parameter["interface"]);
+        return 1;
+    }
+    if (parameter.find("lastConnected") != parameter.end()) {
+//        lastConnected = stringToTime();
+        return 1;
+    }
     return 0;
 }
 

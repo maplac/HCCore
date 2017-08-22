@@ -22,7 +22,7 @@
 using json = nlohmann::json;
 
 DeviceBME280::DeviceBME280(int id, Interface interface) : DeviceGeneric(id, Type::BME280, interface) {
-    status = "measuring";
+    status = "unknown";
     packetCounter = -1;
     lostReadouts = 0;
 }
@@ -43,7 +43,7 @@ int DeviceBME280::setParameter(const json &parameter) {
         } else if (parameter.find("humidity") != parameter.end()) {
             lastReadout.humidity = parameter["humidity"];
         } else if (parameter.find("voltage") != parameter.end()) {
-            lastReadout.humidity = parameter["voltage"];
+            lastReadout.voltage = parameter["voltage"];
         } else {
             return 0;
         }
