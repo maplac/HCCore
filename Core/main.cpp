@@ -12,7 +12,7 @@
  * /usr/include/c++/4.9.2/experimental 
  * /usr/include/c++/4.9.2/ 
  * /usr/local/lib
-*/
+ */
 
 
 #include "mainLoop.h"
@@ -38,35 +38,49 @@ using namespace std;
 zmq::context_t zmqContext;
 
 void my_handler(int s) {
-    LOG_I("Caught signal: "+ std::to_string(s));
-    zmq::socket_t zmqSocket (zmqContext, ZMQ_PUB);
-    zmqSocket.connect ("inproc://internalConnection");
+    LOG_I("Caught signal: " + std::to_string(s));
+    zmq::socket_t zmqSocket(zmqContext, ZMQ_PUB);
+    zmqSocket.connect("inproc://internalConnection");
     isMainLoopInterrupted = 1;
     s_send(zmqSocket, "interrupt main thread");
 }
 
 int main(int argc, char** argv) {
 
-//    json par;
-//    par["parameters"]={{"value",15}};
-//    std::cout<<par.dump(3)<<std::endl;
-//    std::cout<<(*par.begin()).dump(3)<<std::endl;
-//    return 0;
-    
+
+    bool isDaemon = false;
+
+    for (int i = 0; i < argc; i++) {
+        std::string arg = std::string(argv[i]);
+        if (arg.compare("daemon") == 0) {
+            isDaemon = true;
+            LOG_I("HC is going to be a daemon.");
+        }
+    }
+
+    if (isDaemon) {
+        int res = daemon(1, 1);
+        if (res != 0) {
+            LOG_E("daemon call failed");
+        }
+    }
+
     // initialize Ctrl-C catching
     struct sigaction sigIntHandler;
     sigIntHandler.sa_handler = my_handler;
     sigemptyset(&sigIntHandler.sa_mask);
     sigIntHandler.sa_flags = 0;
     sigaction(SIGINT, &sigIntHandler, NULL);
+    sigaction(SIGTERM, &sigIntHandler, NULL);
 
     // create ZMQ context
     zmqContext = zmq::context_t(1);
-//    globalZmqContext = &zmqContext;
     
+    isMainLoopInterrupted = 0;
     // start main loop
     mainLoop(zmqContext);
-    
+
     LOG_I("Exit");
-    return 0;
+    
+    exit(0);
 }

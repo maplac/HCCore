@@ -38,8 +38,7 @@ using json = nlohmann::json;
 void tcpServer(zmq::context_t &zmqContext, int pipe);
 
 int mainLoop(zmq::context_t &zmqContext) {
-    isMainLoopInterrupted = 0;
-
+    
     // sending to web server
     zmq::socket_t zmqSocketOut(zmqContext, ZMQ_PUB);
     zmqSocketOut.bind("tcp://*:20001");
