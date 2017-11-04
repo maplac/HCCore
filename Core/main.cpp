@@ -47,7 +47,7 @@ void my_handler(int s) {
 
 int main(int argc, char** argv) {
 
-
+    usleep(200000);
     bool isDaemon = false;
 
     for (int i = 0; i < argc; i++) {
