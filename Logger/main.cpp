@@ -5,6 +5,8 @@
  * Created on 20. srpna 2017, 21:57
  */
 
+// linker: -I/usr/local/lib -L/usr/local/lib -lzmq -pthread
+
 #include <cstdlib>
 #include <string>
 #include <fstream>
@@ -29,12 +31,12 @@ std::deque<std::string> buffer;
 std::mutex mutexBuffer;
 
 // ZQM
-zmq::context_t zmqContext;
+zmq::context_t *zmqContext;
 
 std::string timeToString(const struct timeval &timestamp, const char * format = "%Y-%m-%d %H:%M:%S");
 
 void my_handler(int s) {
-    std::cout << "Caught signal: " << std::to_string(s) << std::endl;
+//    std::cout << "Caught signal: " << std::to_string(s) << std::endl;
     isRunning = false;
 }
 
@@ -62,7 +64,7 @@ void zmqLoop(zmq::context_t * zmqContext) {
         { (void *) zmqSocketIntern, 0, ZMQ_POLLIN, 0}
     };
 
-    std::cout << "Zmq loop started." << std::endl;
+//    std::cout << "Zmq loop started." << std::endl;
     while (isRunning.load()) {
         try {
             // wait for messages
@@ -78,7 +80,7 @@ void zmqLoop(zmq::context_t * zmqContext) {
 
             // read and forward message
             std::string msgReceivedStr = s_recv(zmqSocketIntern);
-            std::cout << "received: " << msgReceivedStr << std::endl;
+//            std::cout << "received: " << msgReceivedStr << std::endl;
             s_send(zmqSocketOut, msgReceivedStr);
 
         } else {
@@ -90,17 +92,18 @@ void zmqLoop(zmq::context_t * zmqContext) {
         //  MESSAGE FROM CLIENT
         if (zmqPollItems[0].revents && ZMQ_POLLIN) {
             std::string msgReceivedStr = s_recv(zmqSocketIn);
+//            std::cout << "received from client: " << msgReceivedStr << std::endl;
             
             std::stringstream ss;
             
             mutexBuffer.lock();
             for (int i = 0; i < buffer.size(); i++) {
-                ss << buffer[i];
+                ss << buffer[i] << std::endl;
             }
             mutexBuffer.unlock();
             
-            std::cout << "msg:" << std::endl;
-            std::cout << ss;
+//            std::cout << "msg:";
+//            std::cout << ss.str() << std::endl;
             
             s_send(zmqSocketOut, ss.str());
 
@@ -110,11 +113,11 @@ void zmqLoop(zmq::context_t * zmqContext) {
             }
         }
     }
-    std::cout << "zmq loop finished" << std::endl;
+//    std::cout << "zmq loop finished" << std::endl;
     zmqSocketOut.close();
     zmqSocketIn.close();
     zmqSocketIntern.close();
-    std::cout << "zmq thread finished" << std::endl;
+//    std::cout << "zmq thread finished" << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -139,15 +142,15 @@ int main(int argc, char** argv) {
     
 
     // create ZMQ context
-    zmqContext = zmq::context_t(1);
+    zmqContext = new zmq::context_t(1);
    
 
-    zmq::socket_t zmqSocket(zmqContext, ZMQ_PUB);
+    zmq::socket_t zmqSocket(*zmqContext, ZMQ_PUB);
     zmqSocket.connect("inproc://loggerInternalConnection");
 
-    std::thread zmqThread(&zmqLoop, &zmqContext);
+    std::thread zmqThread(&zmqLoop, zmqContext);
 
-    std::cout << "main loop started" << std::endl;
+//    std::cout << "main loop started" << std::endl;
     while (std::cin.good() && isRunning.load()) {
 
         // get current time and create filename
@@ -201,12 +204,14 @@ int main(int argc, char** argv) {
         os.close();
 
     }
-    std::cout << "main loop finished" << std::endl;
+//    std::cout << "main loop finished" << std::endl;
     
+    isRunning = false;
     // send message to the second thread so it can wake up and exit
     s_send(zmqSocket, "Logger is closing.");
     zmqThread.join();
     zmqSocket.close();
+    std::cout << "Logger is closing." << std::endl;
     return 0;
 }
 
