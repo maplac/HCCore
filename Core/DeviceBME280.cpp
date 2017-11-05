@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#define READOUTS_BUFFER_PERIOD 600 // in seconds
+#define READOUTS_BUFFER_PERIOD 43200 // in seconds
 using json = nlohmann::json;
 
 DeviceBME280::DeviceBME280(int id, Interface interface) : DeviceGeneric(id, Type::BME280, interface) {
@@ -255,7 +255,7 @@ int DeviceBME280::saveLastReadout() {
     std::string idString = idToString(id);
     std::string typeString = typeToString(type);
     std::string fileName = idString + "_" + typeString + "_" + dateString + ".csv";
-    std::string filePath = std::string(PATH_DATA) + "/" + idString + "/";
+    std::string filePath = std::string(PATH_DATA) + idString + "/";
     std::ofstream fs;
     fs.open(filePath + fileName, std::ios::out | std::ios::app);
     if (!fs.is_open()) {
@@ -283,7 +283,7 @@ int DeviceBME280::loadReadoutsBuffer() {
 
 
     string fileName = idToString(id) + "_" + typeToString(type) + "_" + timeStartString + ".csv";
-    string filePath = std::string(PATH_DATA) + "/" + idToString(id) + "/";
+    string filePath = std::string(PATH_DATA) + idToString(id) + "/";
     ifstream fs;
     fs.open(filePath + fileName, std::ios::in);
     if (!fs.is_open()) {
@@ -312,7 +312,7 @@ int DeviceBME280::loadReadoutsBuffer() {
     // data are loaded from two files
     if (timeStartString.compare(timeNowString) != 0) {
         fileName = idToString(id) + "_" + typeToString(type) + "_" + timeNowString + ".csv";
-        filePath = string(PATH_DATA) + "/" + idToString(id) + "/";
+        filePath = string(PATH_DATA) + idToString(id) + "/";
         ifstream fs;
         fs.open(filePath + fileName, ios::in);
         if (!fs.is_open()) {
