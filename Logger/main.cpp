@@ -97,8 +97,11 @@ void zmqLoop(zmq::context_t * zmqContext) {
             std::stringstream ss;
             
             mutexBuffer.lock();
-            for (int i = 0; i < buffer.size(); i++) {
-                ss << buffer[i] << std::endl;
+            for (int i = buffer.size()-1; i >= 0; i--) {
+                ss << buffer[i];
+                if(i > 0){
+                    ss << std::endl;
+                }
             }
             mutexBuffer.unlock();
             
@@ -208,10 +211,10 @@ int main(int argc, char** argv) {
     
     isRunning = false;
     // send message to the second thread so it can wake up and exit
-    s_send(zmqSocket, "Logger is closing.");
+    s_send(zmqSocket, "===========================================================");
     zmqThread.join();
     zmqSocket.close();
-    std::cout << "Logger is closing." << std::endl;
+    //std::cout << "Logger is closing." << std::endl;
     return 0;
 }
 
