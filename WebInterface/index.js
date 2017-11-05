@@ -68,7 +68,12 @@ io.sockets.on('connect', function(client) {
     });
 	
 	client.on('message', function(msg){
-		console.log("ws in: "+JSON.stringify(msg));
+		//console.log("ws in: "+JSON.stringify(msg));
+		//var msg = JSON.parse(msgRaw);
+		var desId = parseInt(msg.desId);
+		var srcId = parseInt(msg.srcId);
+		var type =  msg.type;
+		console.log("ws  in: des = " + desId + ", src = " + srcId + ", type = " + type);
 		socketZmqOut.send(JSON.stringify(msg));
 	});
 });
@@ -121,7 +126,10 @@ function clientsToString(c){
 socketZmqIn.on("message", function (msgRaw) {  
 	var msg = JSON.parse(msgRaw);
 	var desId = parseInt(msg.desId);
-	console.log("zmq in: "+JSON.stringify(msg));
+	var srcId = parseInt(msg.srcId);
+	var type =  msg.type;
+	//console.log("zmq in: "+JSON.stringify(msg));
+	console.log("zmq in: des = " + desId + ", src = " + srcId + ", type = " + type);
 	
 	// if the message is broadcast send it to all client
 	if(msg.desId == BROADCAST_ID){
