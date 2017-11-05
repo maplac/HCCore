@@ -2,6 +2,8 @@
 
 BINCORE=/home/pi/HomeControl/bin/homecontrol
 BINLOGGER=/home/pi/HomeControl/bin/logger
+BINLOGVIEW=/home/pi/HomeControl/bin/logview
+PATHWEBINTERFACE=/home/pi/HomeControl/WebInterface
 
 function startCore {
 	
@@ -10,17 +12,15 @@ function startCore {
 
 	if [ -n "$PS" ]; then
 		echo 'HomeControl-Core is already running'
-		echo $PS
-		exit 1
+		#echo $PS
+	else
+		echo 'Starting core '
+		stdbuf -oL $BINCORE daemon &> >($BINLOGGER)
+			
+		#PID='pgrep -n -x homecontrol'
+		#echo "$PID"
+		#sleep 1
 	fi
-	echo 'Starting core '
-
-	stdbuf -oL $BINCORE daemon &> >($BINLOGGER)
-		
-	#PID='pgrep -n -x homecontrol'
-	#echo "$PID"
-	
-	#sleep 1
 }
 
 function stopCore {
@@ -29,13 +29,37 @@ function stopCore {
 }
 
 function startWeb {
-	echo 'Starting webserver '
+	PS=`ps -A | grep node`
+
+	if [ -n "$PS" ]; then
+		echo 'HomeControl-WebServer is already running'
+		#echo $PS
+	else
+		echo 'Starting webserver '
+		cd $PATHWEBINTERFACE
+		nohup sudo node index.js > /dev/null 2>&1 &
+	fi
 }
 
 function stopWeb {
 	echo 'Stopping webserver '
+	sudo killall -INT node
 }
 
+function log {
+	#echo 'Showing log '
+	$BINLOGVIEW
+}
+
+function startAll {
+	startCore
+	startWeb
+}
+
+function stopAll {
+	stopCore
+	stopWeb
+}
 
 case "$1" in
   startcore)
@@ -50,8 +74,17 @@ case "$1" in
   stopweb)
   stopWeb
 	;;
+  log)
+  log
+	;;
+  startall)
+  startAll
+	;;
+  stopall)
+  stopAll
+	;;
   *)
-	echo $"Usage: $0 {startcore|stopcore|startweb|stopweb}"
+	echo $"Usage: $0 {startcore|stopcore|startweb|stopweb|log|startall|stopall}"
 	exit 1
 esac
 
