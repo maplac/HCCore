@@ -65,6 +65,7 @@ protected:
     std::string description;
     Interface interface;
     int pipeIndex;
+    bool isWaitingForFirstData;
 };
 
 #endif	/* DEVICEGENERIC_H */

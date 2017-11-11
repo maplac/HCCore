@@ -125,25 +125,66 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
 
             gettimeofday(&lastConnected, NULL);
 
-            
             // get readouts from received packet
+            readout currentReadout;
             float *dataF = (float*) &data;
-            lastReadout.temperature = dataF[1];
-            lastReadout.pressure = dataF[2];
-            lastReadout.humidity = dataF[3];
-            lastReadout.voltage = dataF[4];
-            lastReadout.time = lastConnected;
+            currentReadout.temperature = dataF[1];
+            currentReadout.pressure = dataF[2];
+            currentReadout.humidity = dataF[3];
+            currentReadout.voltage = dataF[4];
+            currentReadout.time = lastConnected;
             uint32_t *dataUI32 = (uint32_t*) & data;
-            lostReadouts = dataUI32[5];
+            unsigned int receivedLostReadouts = dataUI32[5];
+
+            // if the received readouts differs for more then 30% from previous readouts
+            if (abs(currentReadout.temperature - lastReadout.temperature) > (lastReadout.temperature * 0.3)) {
+                std::stringstream ss;
+                ss << "Possible outliner detected: previous value = " << lastReadout.temperature;
+                ss << " degC, received value = " << currentReadout.temperature << " degC.";
+                LOG_W(ss.str());
+            }
+            if (abs(currentReadout.pressure - lastReadout.pressure) > (lastReadout.pressure * 0.3)) {
+                std::stringstream ss;
+                ss << "Possible outliner detected: previous value = " << lastReadout.pressure;
+                ss << " Pa, received value = " << currentReadout.pressure << " Pa.";
+                LOG_W(ss.str());
+            }
+            if (abs(currentReadout.humidity - lastReadout.humidity) > (lastReadout.humidity * 0.3)) {
+                std::stringstream ss;
+                ss << "Possible outliner detected: previous value = " << lastReadout.humidity;
+                ss << " %, received value = " << currentReadout.humidity << " %";
+                LOG_W(ss.str());
+            }
+
+            /*
+            // if some readouts were lost
+            if (receivedLostReadouts != lostReadouts) {
+
+                // do not print error if this is the first received packet or the device just started
+                if (!isWaitingForFirstData && packetCounter!=0 ) {
+                    std::stringstream ss;
+                    ss << "Lost readout detected: count = " << (receivedLostReadouts - lostReadouts);
+                    ss << ", total = " << (lostReadouts + receivedLostReadouts) << ".";
+                    LOG_E(ss.str());
+                }
+            }
+            */
+            // save received readouts
+            lastReadout.temperature = currentReadout.temperature;
+            lastReadout.pressure = currentReadout.pressure;
+            lastReadout.humidity = currentReadout.humidity;
+            lastReadout.voltage = currentReadout.voltage;
+            lastReadout.time = currentReadout.time;
+            lostReadouts = receivedLostReadouts;
+            isWaitingForFirstData = false;
 
 
-            
             std::stringstream ss;
             ss << "temperature = " << lastReadout.temperature;
             ss << ", pressure = " << lastReadout.pressure;
             ss << ", humidity = " << lastReadout.humidity;
             ss << ", voltage = " << lastReadout.voltage;
-            LOG_I(ss.str());
+//            LOG_I(ss.str());
 
             // create message for web server
             reply["type"] = "pushNewData";
@@ -155,7 +196,7 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
                 {"voltage", lastReadout.voltage},
                 {"time", timeToStringLocal(lastReadout.time)}
             };
-
+ 
             readoutsBuffer.push_back(lastReadout);
             saveLastReadout();
             removeOldReadouts();
@@ -413,75 +454,3 @@ int DeviceBME280::removeOldReadouts() {
     }
     return deleted;
 }
-
-/*
-using namespace std::chrono;
-    using namespace std;
-
-    char buff[11];
-    system_clock::time_point tp = system_clock::now() - std::chrono::hours(READOUTS_BUFFER_PERIOD);
-    time_t t = system_clock::to_time_t(tp);
-    strftime(buff, 11, "%Y-%m-%d", localtime(&t));
-    string timeStartString(buff);
-    tp = system_clock::now();
-    t = system_clock::to_time_t(tp);
-    strftime(buff, 11, "%Y-%m-%d", localtime(&t));
-    string timeNowString(buff);
-    //    LOG_I("file timeStart: " + timeStartString);
-    //    LOG_I("file timeNow: " + timeNowString);
-
-
-    string fileName = idToString(id) + "_" + typeToString(type) + "_" + timeStartString + ".csv";
-    string filePath = std::string(PATH_DATA) + "/" + idToString(id) + "/";
-    ifstream fs;
-    fs.open(filePath + fileName, std::ios::in);
-    if (!fs.is_open()) {
-        LOG_E("loadReadoutsBuffer()  opening file " + filePath + fileName + ": " + string(strerror(errno)));
-        return -1;
-    }
-
-    // read whole file
-    string line;
-    while (getline(fs, line)) {
-        vector<string> cells = split(line, ",");
-
-        // if the line is deformed skip it
-        if (cells.size() < 4) {
-            continue;
-        }
-        string cellTime = cells[0];
-        std::tm tmm = {};
-        time_t t = time(0); // get time now
-        std::tm now = *localtime(& t);
-        strptime(cellTime.c_str(), "%Y-%m-%d %H:%M:%S", &tmm);
-        now.tm_year = tmm.tm_year;
-        now.tm_mon = tmm.tm_mon;
-        now.tm_mday = tmm.tm_mday;
-        now.tm_min = tmm.tm_min;
-        now.tm_sec = tmm.tm_sec;
-        std::cout << "h: " << now.tm_hour << ", m: " << now.tm_min << std::endl;
-        std::time_t t1 = std::mktime(&tmm);
-        system_clock::time_point tp = system_clock::from_time_t(t1);
-        std::time_t t2 = system_clock::to_time_t(tp);
-        char buff2[20];
-        strftime(buff2, 20, "%Y-%m-%d %H:%M:%S", localtime(&t1));
-        std::string str2(buff2);
-        std::cout << str2 << std::endl;
-        strftime(buff2, 20, "%Y-%m-%d %H:%M:%S", gmtime(&t2));
-        str2 = buff2;
-        std::cout << str2 << std::endl;
-
-        readout r;
-        r.time = tp;
-        r.temperature = stoi(cells[1]);
-        r.pressure = stoi(cells[2]);
-        r.humidity = stoi(cells[3]);
-        readoutsBuffer.push_back(r);
-        //            char buff2[20];
-        //            time_t t = system_clock::to_time_t(tp);
-        //            strftime(buff2, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
-        //            string str2(buff2);
-        //            LOG_I("loaded time: " + str2);
-    }
-    fs.close();
- */

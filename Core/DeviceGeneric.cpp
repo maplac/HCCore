@@ -18,6 +18,7 @@ DeviceGeneric::DeviceGeneric(int id, Type type, Interface interface) {
     this->type = type;
     this->interface = interface;
     pipeIndex = -1;
+    isWaitingForFirstData = true;
 }
 
 DeviceGeneric::~DeviceGeneric() {
