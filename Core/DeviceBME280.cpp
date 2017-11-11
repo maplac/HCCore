@@ -71,7 +71,7 @@ nlohmann::json DeviceBME280::getDevice() {
  *
  */
 int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json& reply) {
-    
+
     std::string msgType = msg["type"];
     int srcId = msg["srcId"];
 
@@ -124,6 +124,7 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
             }
 
             gettimeofday(&lastConnected, NULL);
+
             
             // get readouts from received packet
             float *dataF = (float*) &data;
@@ -135,21 +136,13 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
             uint32_t *dataUI32 = (uint32_t*) & data;
             lostReadouts = dataUI32[5];
 
-            // TODO change count to time
-            // push the new readouts to a queque that hold last values
-            //            while (readoutsBuffer.size() > 30) {
-            //                readoutsBuffer.pop_front();
-            //            }
 
-
-
+            
             std::stringstream ss;
             ss << "temperature = " << lastReadout.temperature;
             ss << ", pressure = " << lastReadout.pressure;
             ss << ", humidity = " << lastReadout.humidity;
             ss << ", voltage = " << lastReadout.voltage;
-           // ss << ", time = " << timeToString(lastReadout.time);
-            //            ss << ", local = " << timeToStringLocal(lastReadout.time);
             LOG_I(ss.str());
 
             // create message for web server
@@ -224,11 +217,34 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
         std::vector<int> readoutsPressure;
         std::vector<int> readoutsHumidity;
         std::vector<std::string> readoutsTime;
-        for (int i = 0; i < readoutsBuffer.size(); i++) {
-            readoutsTemperature.push_back(round(readoutsBuffer[i].temperature*100));
-            readoutsHumidity.push_back(round(readoutsBuffer[i].humidity*100));
-            readoutsPressure.push_back(round(readoutsBuffer[i].pressure));
-            readoutsTime.push_back(timeToStringLocal(readoutsBuffer[i].time));
+        float sumTemperature = 0;
+        float sumPressure = 0;
+        float sumHumidity = 0;
+        struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
+        int size = floor(readoutsBuffer.size() / 200);
+        for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
+
+
+            sumTime = readoutsBuffer[i].time;
+            for (int j = 0; j < size; ++j) {
+                if (i < 0) {
+                    break;
+                }
+                sumTemperature += readoutsBuffer[i].temperature;
+                sumPressure += readoutsBuffer[i].pressure;
+                sumHumidity += readoutsBuffer[i].humidity;
+                i--;
+            }
+
+            readoutsTemperature.insert(readoutsTemperature.begin(), round(sumTemperature * 100 / size));
+            readoutsPressure.insert(readoutsPressure.begin(), round(sumPressure / size));
+            readoutsHumidity.insert(readoutsHumidity.begin(), round(sumHumidity * 100 / size));
+            readoutsTime.insert(readoutsTime.begin(), timeToStringLocal(sumTime));
+
+            sumTemperature = 0;
+            sumPressure = 0;
+            sumHumidity = 0;
+
         }
         reply["data"] = {
             {"temperature", readoutsTemperature},
@@ -236,6 +252,7 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
             {"humidity", readoutsHumidity},
             {"time", readoutsTime}
         };
+
         //        LOG_I("processMsgFromGui() data:\n" + reply["data"].dump(2));
 
 
