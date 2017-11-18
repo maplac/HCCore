@@ -23,6 +23,10 @@ DeviceBME280.prototype.getHtmlDeviceInfo = function() {
 	code += '<span id="device_panel_humidity" class="big_text" style="padding-left: 50px">'+Math.round(this.humidity*10)/10 + ' %'+'</span>'
 	code += '<span id="device_panel_pressure" class="big_text" style="padding-left: 50px">'+Math.round(this.pressure) + ' Pa'+'</span>'
 	code += '<span id="device_panel_voltage" class="big_text" style="padding-left: 50px">'+Math.round(this.voltage*100)/100 + ' V'+'</span><br><br>'
+	code += '<span><button id="button_day" class="button_switch button_switch_deselected" onclick="selectedDevice.onButtonPress(\'day\')"> One day</button> \
+	<button id="button_week" class="button_switch button_switch_deselected" onclick="selectedDevice.onButtonPress(\'week\')">One week</button>\
+	<button id="button_month" class="button_switch button_switch_deselected" onclick="selectedDevice.onButtonPress(\'month\')">One month</button>\
+	<button id="button_year" class="button_switch button_switch_deselected" onclick="selectedDevice.onButtonPress(\'year\')">One year</button></span></br>'
 	code += '<div id="graph_temperature" style="width:100%;height:300px;margin-top:10px"></div>'
 	code += '<div id="graph_humidity" style="width:100%;height:300px;margin-top:10px"></div>'
 	code += '<div id="graph_pressure" style="width:100%;height:300px;margin-top:10px"></div>'
@@ -39,11 +43,52 @@ DeviceBME280.prototype.newDataReceived = function(msg) {
 	this.humidity = msg.data.humidity;
 	this.voltage = msg.data.voltage;
 	this.lastConnected = msg.lastConnected;
-	document.getElementById('device_panel_temperature').innerHTML = Math.round(this.temperature*100)/100 + "&degC";
-	document.getElementById('device_panel_humidity').innerHTML = Math.round(this.humidity*10)/10 + "%";
+	document.getElementById('device_panel_temperature').innerHTML = Math.round(this.temperature*100)/100 + " &degC";
+	document.getElementById('device_panel_humidity').innerHTML = Math.round(this.humidity*10)/10 + " %";
 	document.getElementById('device_panel_pressure').innerHTML = Math.round(this.pressure) + " Pa";
 	document.getElementById('device_panel_voltage').innerHTML = Math.round(this.voltage*100)/100 + " V";
 	document.getElementById('device_panel_last_connected').innerHTML = msg.lastConnected;
+}
+
+DeviceBME280.prototype.onButtonPress = function(type) {
+	console.log("pressed: " + type);
+	var msg = {};
+	msg.desId = this.id;
+	msg.srcId = clientId;
+	msg.type = "pullDataBuffer";
+
+	switch(type){
+		case "day":
+			document.getElementById('button_day').className = "button_switch button_switch_selected"
+			document.getElementById('button_week').className = "button_switch button_switch_deselected"
+			document.getElementById('button_month').className = "button_switch button_switch_deselected"
+			document.getElementById('button_year').className = "button_switch button_switch_deselected"
+			msg.subType = "day";
+			break;
+		case "week":
+			document.getElementById('button_day').className = "button_switch button_switch_deselected"
+			document.getElementById('button_week').className = "button_switch button_switch_selected"
+			document.getElementById('button_month').className = "button_switch button_switch_deselected"
+			document.getElementById('button_year').className = "button_switch button_switch_deselected"
+			msg.subType = "week";
+			break;
+		case "month":
+			document.getElementById('button_day').className = "button_switch button_switch_deselected"
+			document.getElementById('button_week').className = "button_switch button_switch_deselected"
+			document.getElementById('button_month').className = "button_switch button_switch_selected"
+			document.getElementById('button_year').className = "button_switch button_switch_deselected"
+			msg.subType = "month";
+			break;
+		case "year":
+			document.getElementById('button_day').className = "button_switch button_switch_deselected"
+			document.getElementById('button_week').className = "button_switch button_switch_deselected"
+			document.getElementById('button_month').className = "button_switch button_switch_deselected"
+			document.getElementById('button_year').className = "button_switch button_switch_selected"
+			msg.subType = "year";
+			break;
+		default:
+	}
+	socket.emit('message', msg);
 }
 
 DeviceBME280.prototype.dataBufferReceived = function(msg) {

@@ -24,10 +24,12 @@ window.onload = function() {
 		msg.type = "pullAllDevices";
 		socket.emit('message', msg);
 	});
+	/*
 	graph = document.getElementById('graph');
 	graph2 = document.getElementById('graph2');
 	tempe = document.getElementById('device_temperature');
 	humi = document.getElementById('device_humidity');
+	*/
 };
 
 // when a user selects a device in the menu

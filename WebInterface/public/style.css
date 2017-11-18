@@ -99,8 +99,7 @@ body{
 }
 .button_onoff:hover {
 	cursor: pointer;
-    color: #4EB1BA; /* Green */
-
+    color: #4EB1BA;
 }
 .on{
 	border-color: #00ff00;
@@ -111,6 +110,34 @@ body{
 .big_text{
 	color: #4EB1BA;
 	font-size: 250%;
+}
+
+.button_switch {
+    background-color: transparent; 
+    border: none;
+    color: #DDDDDD;
+	width: 150px;
+	height: 40px;
+    /*padding: 15px 32px;*/
+    text-align: center;
+	/*vertical-align: middle;*/
+    text-decoration: none;
+    display: inline-block;
+    font-size: 20px;
+	font-weight: bold;
+	border: 2px solid #4EB1BA; /* Green 4CAF50*/
+	transition-duration: 0.2s;
+	/*line-height: 50px;*/
+}
+.button_switch:hover {
+	cursor: pointer;
+    color: #4EB1BA;
+}
+.button_switch_selected {
+    color: #4EB1BA;
+}
+.button_switch_deselected {
+    color: #DDDDDD;
 }
 /*
 <button id="device_1" class="but" type="button" onclick="onClickDeviceSelect(this.id)">Device1</button>

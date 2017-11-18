@@ -42,3 +42,6 @@ DeviceGeneric.prototype.setParameters = function(device) {
 	this.status = device.status;
 	this.lastConnected = device.lastConnected;
 }
+
+DeviceGeneric.prototype.onButtonPress = function(type) {
+}
