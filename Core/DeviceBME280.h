@@ -52,6 +52,8 @@ private:
     int saveLastReadout();
     int removeOldReadouts();
     readout stringToReadout(const std::vector<std::string> &cells);
+    int getReadoutsWeek(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure, 
+            std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime);
 };
 
 #endif /* DEVICEBME280_H */

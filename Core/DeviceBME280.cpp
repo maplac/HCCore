@@ -18,7 +18,8 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#define READOUTS_BUFFER_PERIOD 43200 // in seconds
+#define READOUTS_BUFFER_PERIOD 86400 // in seconds
+#define NUMBER_POINTS_IN_GRAPH  200
 using json = nlohmann::json;
 
 DeviceBME280::DeviceBME280(int id, Interface interface) : DeviceGeneric(id, Type::BME280, interface) {
@@ -168,7 +169,7 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
                     LOG_E(ss.str());
                 }
             }
-            */
+             */
             // save received readouts
             lastReadout.temperature = currentReadout.temperature;
             lastReadout.pressure = currentReadout.pressure;
@@ -184,7 +185,7 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
             ss << ", pressure = " << lastReadout.pressure;
             ss << ", humidity = " << lastReadout.humidity;
             ss << ", voltage = " << lastReadout.voltage;
-//            LOG_I(ss.str());
+            //            LOG_I(ss.str());
 
             // create message for web server
             reply["type"] = "pushNewData";
@@ -196,7 +197,7 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
                 {"voltage", lastReadout.voltage},
                 {"time", timeToStringLocal(lastReadout.time)}
             };
- 
+
             readoutsBuffer.push_back(lastReadout);
             saveLastReadout();
             removeOldReadouts();
@@ -247,55 +248,73 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
         reply["device"] = getDevice();
 
     } else if (msgType.compare("pullDataBuffer") == 0) {
-        if (readoutsBuffer.empty()) {
-            LOG_W("processMsgFromGui() readout buffer is empty");
-            return -1;
+
+        std::string subType;
+        if (msg.find("subType") != msg.end()) {
+            subType = msg["subType"];
+        } else {
+            subType = "day";
         }
-        reply["desId"] = msg["srcId"];
-        reply["type"] = "pushDataBuffer";
 
         std::vector<int> readoutsTemperature;
         std::vector<int> readoutsPressure;
         std::vector<int> readoutsHumidity;
         std::vector<std::string> readoutsTime;
-        float sumTemperature = 0;
-        float sumPressure = 0;
-        float sumHumidity = 0;
-        struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
-        int size = floor(readoutsBuffer.size() / 200);
-        for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
 
+        if (subType.compare("day") == 0) {
 
-            sumTime = readoutsBuffer[i].time;
-            for (int j = 0; j < size; ++j) {
-                if (i < 0) {
-                    break;
-                }
-                sumTemperature += readoutsBuffer[i].temperature;
-                sumPressure += readoutsBuffer[i].pressure;
-                sumHumidity += readoutsBuffer[i].humidity;
-                i--;
+            if (readoutsBuffer.empty()) {
+                LOG_W("processMsgFromGui() readout buffer is empty");
+                return -1;
             }
 
-            readoutsTemperature.insert(readoutsTemperature.begin(), round(sumTemperature * 100 / size));
-            readoutsPressure.insert(readoutsPressure.begin(), round(sumPressure / size));
-            readoutsHumidity.insert(readoutsHumidity.begin(), round(sumHumidity * 100 / size));
-            readoutsTime.insert(readoutsTime.begin(), timeToStringLocal(sumTime));
+            float sumTemperature = 0;
+            float sumPressure = 0;
+            float sumHumidity = 0;
+            struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
+            int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
+            for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
+                sumTime = readoutsBuffer[i].time;
+                for (int j = 0; j < size; ++j) {
+                    if (i < 0) {
+                        break;
+                    }
+                    sumTemperature += readoutsBuffer[i].temperature;
+                    sumPressure += readoutsBuffer[i].pressure;
+                    sumHumidity += readoutsBuffer[i].humidity;
+                    i--;
+                }
+                readoutsTemperature.insert(readoutsTemperature.begin(), round(sumTemperature * 100 / size));
+                readoutsPressure.insert(readoutsPressure.begin(), round(sumPressure / size));
+                readoutsHumidity.insert(readoutsHumidity.begin(), round(sumHumidity * 100 / size));
+                readoutsTime.insert(readoutsTime.begin(), timeToStringLocal(sumTime));
+                sumTemperature = 0;
+                sumPressure = 0;
+                sumHumidity = 0;
 
-            sumTemperature = 0;
-            sumPressure = 0;
-            sumHumidity = 0;
+            }
 
+        } else if (subType.compare("week") == 0) {
+            getReadoutsWeek(readoutsTemperature, readoutsPressure, readoutsHumidity, readoutsTime);
+        } else if (subType.compare("month") == 0) {
+
+        } else if (subType.compare("year") == 0) {
+
+        } else {
+            LOG_W("processMsgFromGui() unknown subtype: " + subType);
+            return -1;
         }
+
+
+        reply["desId"] = msg["srcId"];
+        reply["type"] = "pushDataBuffer";
+        reply["subType"] = subType;
         reply["data"] = {
             {"temperature", readoutsTemperature},
             {"pressure", readoutsPressure},
             {"humidity", readoutsHumidity},
             {"time", readoutsTime}
         };
-
-        //        LOG_I("processMsgFromGui() data:\n" + reply["data"].dump(2));
-
 
     } else {
         LOG_E("processMsgFromGui() unknown type of message");
@@ -453,4 +472,44 @@ int DeviceBME280::removeOldReadouts() {
         }
     }
     return deleted;
+}
+
+int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure,
+        std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime) {
+    /*
+     * for files in last week
+     *  load file
+     *  average per hour
+     *  put values in buffers
+     * end
+    */
+        
+    
+            
+            
+    float sumTemperature = 0;
+    float sumPressure = 0;
+    float sumHumidity = 0;
+    struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
+    int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
+    for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
+        sumTime = readoutsBuffer[i].time;
+        for (int j = 0; j < size; ++j) {
+            if (i < 0) {
+                break;
+            }
+            sumTemperature += readoutsBuffer[i].temperature;
+            sumPressure += readoutsBuffer[i].pressure;
+            sumHumidity += readoutsBuffer[i].humidity;
+            i--;
+        }
+        readoutsTemperature.insert(readoutsTemperature.begin(), round(sumTemperature * 100 / size));
+        readoutsPressure.insert(readoutsPressure.begin(), round(sumPressure / size));
+        readoutsHumidity.insert(readoutsHumidity.begin(), round(sumHumidity * 100 / size));
+        readoutsTime.insert(readoutsTime.begin(), timeToStringLocal(sumTime));
+        sumTemperature = 0;
+        sumPressure = 0;
+        sumHumidity = 0;
+
+    }
 }
