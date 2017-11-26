@@ -73,7 +73,14 @@ io.sockets.on('connect', function(client) {
 		var desId = parseInt(msg.desId);
 		var srcId = parseInt(msg.srcId);
 		var type =  msg.type;
-		console.log("ws  in: des = " + desId + ", src = " + srcId + ", type = " + type);
+                if ('subType' in msg){
+                    var subType = "";
+                    subType = msg.subType;
+                    //console.log("zmq in: "+JSON.stringify(msg));
+                    console.log("zmq in: des = " + desId + ", src = " + srcId + ", type = " + type + ", subType = " + subType);
+                } else {
+                    console.log("zmq in: des = " + desId + ", src = " + srcId + ", type = " + type);
+                }
 		socketZmqOut.send(JSON.stringify(msg));
 	});
 });
@@ -128,8 +135,15 @@ socketZmqIn.on("message", function (msgRaw) {
 	var desId = parseInt(msg.desId);
 	var srcId = parseInt(msg.srcId);
 	var type =  msg.type;
-	//console.log("zmq in: "+JSON.stringify(msg));
-	console.log("zmq in: des = " + desId + ", src = " + srcId + ", type = " + type);
+        if ('subType' in msg){
+            var subType = "";
+            subType = msg.subType;
+            //console.log("zmq in: "+JSON.stringify(msg));
+            console.log("zmq in: des = " + desId + ", src = " + srcId + ", type = " + type + ", subType = " + subType);
+        }else{
+            console.log("zmq in: des = " + desId + ", src = " + srcId + ", type = " + type);
+        }
+	
 	
 	// if the message is broadcast send it to all client
 	if(msg.desId == BROADCAST_ID){

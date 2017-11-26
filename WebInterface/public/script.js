@@ -39,7 +39,7 @@ function onClickDeviceSelect(button){
 	var splitted = button.id.split('_');
 	var id = parseInt(splitted[1]);
 	
-	selectedDevice.id = id
+	selectedDevice.id = id;
 	
 	// remove selected layout from previous device
 	if (typeof selected_device_in_list !== 'undefined') {
