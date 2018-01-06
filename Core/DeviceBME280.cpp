@@ -273,6 +273,7 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
             float sumHumidity = 0;
             struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
             int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
+            size = size < 2 ? 1 : size;
             for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
                 sumTime = readoutsBuffer[i].time;
                 for (int j = 0; j < size; ++j) {
@@ -482,11 +483,11 @@ int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::ve
      *  average per hour
      *  put values in buffers
      * end
-    */
-        
-    
-            
-            
+     */
+
+
+
+
     float sumTemperature = 0;
     float sumPressure = 0;
     float sumHumidity = 0;
