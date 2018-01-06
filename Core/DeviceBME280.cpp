@@ -366,24 +366,24 @@ int DeviceBME280::loadReadoutsBuffer() {
     fs.open(filePath + fileName, std::ios::in);
     if (!fs.is_open()) {
         LOG_W("loadReadoutsBuffer()  opening file " + filePath + fileName + ": " + string(strerror(errno)));
-        return -1;
-    }
+    } else {
 
-    // read whole file
-    string line;
-    while (getline(fs, line)) {
-        vector<string> cells = split(line, ",");
+        // read whole file
+        string line;
+        while (getline(fs, line)) {
+            vector<string> cells = split(line, ",");
 
-        // if the line is deformed skip it
-        if (cells.size() < 5) {
-            continue;
+            // if the line is deformed skip it
+            if (cells.size() < 5) {
+                continue;
+            }
+
+            readout r = stringToReadout(cells);
+            //        LOG_I("1loaded time      : " + timeToString(r.time));
+            readoutsBuffer.push_back(r);
+            //        LOG_I("1loaded time local: " + timeToStringLocal(r.time));
+
         }
-
-        readout r = stringToReadout(cells);
-        //        LOG_I("1loaded time      : " + timeToString(r.time));
-        readoutsBuffer.push_back(r);
-        //        LOG_I("1loaded time local: " + timeToStringLocal(r.time));
-
     }
     fs.close();
 
@@ -398,6 +398,7 @@ int DeviceBME280::loadReadoutsBuffer() {
             return -1;
         }
 
+        string line;
         while (getline(fs, line)) {
             vector<string> cells = split(line, ",");
 
@@ -477,40 +478,90 @@ int DeviceBME280::removeOldReadouts() {
 
 int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure,
         std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime) {
-    /*
-     * for files in last week
-     *  load file
-     *  average per hour
-     *  put values in buffers
-     * end
-     */
 
+    using namespace std;
 
+    for (int day = 6; day >= 0; day--) {
 
+        struct timeval timeNow;
+        gettimeofday(&timeNow, NULL);
+        timeNow.tv_sec -= day * 24 * 60 * 60;
+        string timeStartString = timeToString(timeNow, "%Y-%m-%d");
+        string fileName = idToString(id) + "_" + typeToString(type) + "_" + timeStartString + ".csv";
+        string filePath = std::string(PATH_DATA) + idToString(id) + "/";
+        int timeOffset = getLocalTimeOffset();
 
-    float sumTemperature = 0;
-    float sumPressure = 0;
-    float sumHumidity = 0;
-    struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
-    int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
-    for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
-        sumTime = readoutsBuffer[i].time;
-        for (int j = 0; j < size; ++j) {
-            if (i < 0) {
-                break;
+        LOG_I("file: " + fileName);
+        ifstream fs;
+        fs.open(filePath + fileName, std::ios::in);
+        if (!fs.is_open()) {
+            LOG_W("getReadoutsWeek()  opening file " + filePath + fileName + ": " + string(strerror(errno)));
+            continue;
+        } else {
+            // read whole file
+            string line;
+            vector<readout> buffer;
+            int lastHour = -1;
+            float sumTemperature = 0;
+            float sumPressure = 0;
+            float sumHumidity = 0;
+            int sumCounter = 0;
+            vector<string> dateCell;
+
+            // get line from the file
+            while (getline(fs, line)) {
+
+                // parse data from the line
+                vector<string> cells = split(line, ",");
+                if (cells.size() < 5) {
+                    continue;
+                }
+                dateCell = split(cells[0], " ");
+                if (cells.size() < 2) {
+                    continue;
+                }
+                vector<string> timeCell = split(dateCell[1], ":");
+
+                // get hour of the current readout
+                int hour = stoi(timeCell[0]);
+
+                // if the hour is different from previous readout
+                if (hour != lastHour) {
+
+                    if (lastHour > 0) {
+                        string readoutTime;
+                        readoutTime = dateCell[0] + " " + to_string(lastHour - timeOffset) + ":30:00";
+                        readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
+                        readoutsPressure.push_back((sumPressure / sumCounter));
+                        readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
+                        readoutsTime.push_back(readoutTime);
+                        LOG_I("hour: " + to_string(lastHour));
+                    }
+                    lastHour = hour;
+                    sumTemperature = 0;
+                    sumPressure = 0;
+                    sumHumidity = 0;
+                    sumCounter = 0;
+                }
+
+                readout r = stringToReadout(cells);
+                sumTemperature += r.temperature;
+                sumPressure += r.pressure;
+                sumHumidity += r.humidity;
+                sumCounter++;
             }
-            sumTemperature += readoutsBuffer[i].temperature;
-            sumPressure += readoutsBuffer[i].pressure;
-            sumHumidity += readoutsBuffer[i].humidity;
-            i--;
+            string readoutTime;
+            readoutTime = dateCell[0] + " " + to_string(lastHour - timeOffset) + ":30:00";
+            readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
+            readoutsPressure.push_back((sumPressure / sumCounter));
+            readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
+            readoutsTime.push_back(readoutTime);
+            //LOG_I("hour: " + to_string(lastHour));
         }
-        readoutsTemperature.insert(readoutsTemperature.begin(), round(sumTemperature * 100 / size));
-        readoutsPressure.insert(readoutsPressure.begin(), round(sumPressure / size));
-        readoutsHumidity.insert(readoutsHumidity.begin(), round(sumHumidity * 100 / size));
-        readoutsTime.insert(readoutsTime.begin(), timeToStringLocal(sumTime));
-        sumTemperature = 0;
-        sumPressure = 0;
-        sumHumidity = 0;
+        fs.close();
 
     }
+    //LOG_I("time offset: " + to_string(getLocalTimeOffset()));
+    return 0;
+
 }

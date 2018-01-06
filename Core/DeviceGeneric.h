@@ -40,6 +40,7 @@ public:
 //    static std::string timeToString(const std::chrono::system_clock::time_point& tp);
     static std::string timeToString(const struct timeval &timestamp, const char * format = "%Y-%m-%d %H:%M:%S");
     static std::string timeToStringLocal(const struct timeval &timestamp, const char * format = "%Y-%m-%d %H:%M:%S");
+    static int getLocalTimeOffset();
     
     int getId();
     virtual nlohmann::json getDevice();

@@ -57,6 +57,7 @@ std::string DeviceGeneric::timeToString(const struct timeval &timestamp, const c
     strftime(buf, 20, format, gmtime(&t));
     return std::string(buf);
 }
+
 std::string DeviceGeneric::timeToStringLocal(const struct timeval &timestamp, const char * format) {
     time_t t = timestamp.tv_sec;
     char buf[20];
@@ -87,7 +88,7 @@ int DeviceGeneric::setParameter(const json &parameter) {
         return 1;
     }
     if (parameter.find("lastConnected") != parameter.end()) {
-//        lastConnected = stringToTime();
+        //        lastConnected = stringToTime();
         return 1;
     }
     return 0;
@@ -176,4 +177,16 @@ std::string DeviceGeneric::idToString(int id) {
 
 int DeviceGeneric::loadReadoutsBuffer() {
 
+}
+
+int DeviceGeneric::getLocalTimeOffset() {
+    time_t now = time(0); // UTC
+    time_t diff;
+    struct tm *ptmgm = gmtime(&now); // further convert to GMT presuming now in local
+    time_t gmnow = mktime(ptmgm);
+    diff = gmnow - now;
+    if (ptmgm->tm_isdst > 0) {
+        diff = diff - 60 * 60;
+    }
+    return round(diff/3600);
 }
