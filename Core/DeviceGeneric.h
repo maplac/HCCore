@@ -37,17 +37,17 @@ public:
     static int interfaceToInt(Interface interface);
     static Interface intToInterface(int interface);
     static std::string idToString(int id);
-//    static std::string timeToString(const std::chrono::system_clock::time_point& tp);
+    //    static std::string timeToString(const std::chrono::system_clock::time_point& tp);
     static std::string timeToString(const struct timeval &timestamp, const char * format = "%Y-%m-%d %H:%M:%S");
     static std::string timeToStringLocal(const struct timeval &timestamp, const char * format = "%Y-%m-%d %H:%M:%S");
-    static int getLocalTimeOffset();
-    
+    static struct timeval stringToTime(const std::string &timeString, const char * format = "%Y-%m-%d %H:%M:%S");
+
     int getId();
     virtual nlohmann::json getDevice();
     /** 0 parameter not found, 1 parameter changed*/
     virtual int setParameter(const nlohmann::json &parameter);
     virtual int saveDeviceToFile() = 0;
-    
+
     
     /** -1 error, 0 nothing, 1 something*/
     // called from mainLoop() when GUI send message

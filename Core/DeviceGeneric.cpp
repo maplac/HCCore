@@ -65,6 +65,18 @@ std::string DeviceGeneric::timeToStringLocal(const struct timeval &timestamp, co
     return std::string(buf);
 }
 
+struct timeval DeviceGeneric::stringToTime(const std::string& timeString, const char* format) {
+    std::tm loadedTime = {};
+    strptime(timeString.c_str(), format, &loadedTime);
+    //    std::cout << "h: " << loadedTime.tm_hour << ", m: " << loadedTime.tm_min << ", s: " << loadedTime.tm_sec << std::endl;
+    struct timeval time;
+    time.tv_sec = loadedTime.tm_sec + loadedTime.tm_min * 60 + loadedTime.tm_hour * 3600 + loadedTime.tm_yday * 86400 +
+            (loadedTime.tm_year - 70) * 31536000 + ((loadedTime.tm_year - 69) / 4) * 86400 -
+            ((loadedTime.tm_year - 1) / 100) * 86400 + ((loadedTime.tm_year + 299) / 400) * 86400;
+    time.tv_usec = 0;
+    return time;
+}
+
 int DeviceGeneric::setParameter(const json &parameter) {
 
     if (parameter.find("description") != parameter.end()) {
@@ -179,14 +191,3 @@ int DeviceGeneric::loadReadoutsBuffer() {
 
 }
 
-int DeviceGeneric::getLocalTimeOffset() {
-    time_t now = time(0); // UTC
-    time_t diff;
-    struct tm *ptmgm = gmtime(&now); // further convert to GMT presuming now in local
-    time_t gmnow = mktime(ptmgm);
-    diff = gmnow - now;
-    if (ptmgm->tm_isdst > 0) {
-        diff = diff - 60 * 60;
-    }
-    return round(diff/3600);
-}

@@ -489,7 +489,6 @@ int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::ve
         string timeStartString = timeToString(timeNow, "%Y-%m-%d");
         string fileName = idToString(id) + "_" + typeToString(type) + "_" + timeStartString + ".csv";
         string filePath = std::string(PATH_DATA) + idToString(id) + "/";
-        int timeOffset = getLocalTimeOffset();
 
         LOG_I("file: " + fileName);
         ifstream fs;
@@ -530,12 +529,14 @@ int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::ve
 
                     if (lastHour > 0) {
                         string readoutTime;
-                        readoutTime = dateCell[0] + " " + to_string(lastHour - timeOffset) + ":30:00";
+                        readoutTime = dateCell[0] + " " + to_string(lastHour) + ":30:00";
+                        timeval t = stringToTime(readoutTime);
+                        readoutTime = timeToStringLocal(t);
+
                         readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
                         readoutsPressure.push_back((sumPressure / sumCounter));
                         readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
                         readoutsTime.push_back(readoutTime);
-                        LOG_I("hour: " + to_string(lastHour));
                     }
                     lastHour = hour;
                     sumTemperature = 0;
@@ -551,7 +552,9 @@ int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::ve
                 sumCounter++;
             }
             string readoutTime;
-            readoutTime = dateCell[0] + " " + to_string(lastHour - timeOffset) + ":30:00";
+            readoutTime = dateCell[0] + " " + to_string(lastHour) + ":30:00";
+            timeval t = stringToTime(readoutTime);
+            readoutTime = timeToStringLocal(t);
             readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
             readoutsPressure.push_back((sumPressure / sumCounter));
             readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
