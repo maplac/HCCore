@@ -7,6 +7,7 @@ function DeviceGeneric(id, type) {
 	this.description = 'none';
 	this.status = 'none';
 	this.lastConnected = 'none';
+        this.selectedView = 'none';
 }
 DeviceGeneric.prototype = Object.create(null);
 
