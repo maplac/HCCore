@@ -17,7 +17,8 @@
 #include "DeviceGeneric.h"
 #include <time.h>
 #include <deque>
-
+#include <string>
+#include <vector>
 
 class DeviceBME280 : public DeviceGeneric{
 public:
@@ -44,6 +45,18 @@ private:
         float humidity;
         float voltage;
     }readout;
+    
+    typedef struct readoutString_tag{
+        std::string date;
+        std::string hours;
+        std::string minutes;
+        std::string seconds;
+        std::string temperature;
+        std::string pressure;
+        std::string humidity;
+        std::string voltage;
+        bool isValid = true;
+    }readoutString;
     readout lastReadout;
     std::deque<readout> readoutsBuffer;
     int packetCounter;
@@ -58,6 +71,7 @@ private:
             std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime);
     int getReadoutsYear(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure, 
             std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime);
+     readoutString splitReadout(std::string line);
 };
 
 #endif /* DEVICEBME280_H */
