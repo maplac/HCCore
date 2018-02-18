@@ -109,6 +109,7 @@ int DeviceGeneric::setParameter(const json &parameter) {
 DeviceGeneric::Type DeviceGeneric::intToType(int type) {
     switch (type) {
         case 1: return Type::BME280;
+        case 2: return Type::Temperature;
         default: return Type::none;
     }
 }
@@ -116,6 +117,7 @@ DeviceGeneric::Type DeviceGeneric::intToType(int type) {
 int DeviceGeneric::typeToInt(Type type) {
     switch (type) {
         case Type::BME280: return 1;
+        case Type::Temperature: return 2;
         default: return 0;
     }
 }
@@ -123,6 +125,7 @@ int DeviceGeneric::typeToInt(Type type) {
 std::string DeviceGeneric::typeToString(Type type) {
     switch (type) {
         case Type::BME280: return "BME280";
+        case Type::Temperature: return "Temperature";
         default: return "none";
     }
 }
@@ -170,6 +173,8 @@ DeviceGeneric::Type DeviceGeneric::stringToType(std::string type) {
 
     if (type.compare("BME280") == 0) {
         return Type::BME280;
+    } else if (type.compare("Temperature") == 0) {
+        return Type::Temperature;
     } else {
         return Type::none;
     }

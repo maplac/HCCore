@@ -10,6 +10,7 @@
 #define OBJECT_NAME     "Device manager"
 #include "Log.h"
 #include "DeviceGeneric.h"
+#include "DeviceTemperature.h"
 
 #include <sstream>
 #include <fstream>
@@ -174,6 +175,9 @@ DeviceGeneric * DeviceManager::createDevice(int id, DeviceGeneric::Type type, De
     switch (type) {
         case DeviceGeneric::Type::BME280:
             device = new DeviceBME280(id, interface);
+            break;
+        case DeviceGeneric::Type::Temperature:
+            device = new DeviceTemperature(id, interface);
             break;
         default:
             return nullptr;

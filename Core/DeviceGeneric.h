@@ -25,7 +25,7 @@ class DeviceGeneric {
 public:
     
     enum class Interface {none, rf24, udp};
-    enum class Type{none, BME280};
+    enum class Type{none, BME280, Temperature};
     
     DeviceGeneric(int id, Type type, Interface interface);
     virtual ~DeviceGeneric();
