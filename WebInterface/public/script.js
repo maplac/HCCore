@@ -103,6 +103,14 @@ socket.on('message', function (msg) {
                         msg.type = "pullDataBuffer";
                         socket.emit('message', msg);
                         break;
+                    case "Temperature":
+                        selectedDevice = new DeviceTemperature(device.id);
+                        var msg = {};
+                        msg.desId = selectedDevice.id;
+                        msg.srcId = clientId;
+                        msg.type = "pullDataBuffer";
+                        socket.emit('message', msg);
+                        break;
                     default :
                         //device_panel.innerHTML = DeviceDHT22.createDevice(selectedDevice);
                         console.log("msg pushDevice: unknown type");
