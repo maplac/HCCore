@@ -48,7 +48,7 @@ void Rf24Server::run() {
     uint64_t pipe_addresses[2] = {0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL};
     uint8_t pipe_no = 0;
 
-    rf24_initialize(&radio, RF24_SPI_DEV_0, 25, 21);
+    rf24_initialize(&radio, RF24_SPI_DEV_0, 16, 21);
     // printf("res=%d", res);
     rf24_set_retries(&radio, 15, 15);
 
