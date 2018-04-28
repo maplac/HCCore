@@ -17,6 +17,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <limits> // min/max value for a variable
 
 #define READOUTS_BUFFER_PERIOD 86400 // in seconds
 #define NUMBER_POINTS_IN_GRAPH  200
@@ -256,49 +257,14 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
             subType = "day";
         }
 
-        std::vector<int> readoutsTemperature;
-        std::vector<int> readoutsPressure;
-        std::vector<int> readoutsHumidity;
-        std::vector<std::string> readoutsTime;
+        readouts_averaged readouts;
 
         if (subType.compare("day") == 0) {
-
-            if (readoutsBuffer.empty()) {
-                LOG_W("processMsgFromGui() readout buffer is empty");
-                return -1;
-            }
-
-            float sumTemperature = 0;
-            float sumPressure = 0;
-            float sumHumidity = 0;
-            struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
-            int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
-            size = size < 2 ? 1 : size;
-            for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
-                sumTime = readoutsBuffer[i].time;
-                for (int j = 0; j < size; ++j) {
-                    if (i < 0) {
-                        break;
-                    }
-                    sumTemperature += readoutsBuffer[i].temperature;
-                    sumPressure += readoutsBuffer[i].pressure;
-                    sumHumidity += readoutsBuffer[i].humidity;
-                    i--;
-                }
-                readoutsTemperature.insert(readoutsTemperature.begin(), round(sumTemperature * 100 / size));
-                readoutsPressure.insert(readoutsPressure.begin(), round(sumPressure / size));
-                readoutsHumidity.insert(readoutsHumidity.begin(), round(sumHumidity * 100 / size));
-                readoutsTime.insert(readoutsTime.begin(), timeToStringLocal(sumTime));
-                sumTemperature = 0;
-                sumPressure = 0;
-                sumHumidity = 0;
-
-            }
-
+            getReadoutsDay(readouts);
         } else if (subType.compare("week") == 0) {
-            getReadoutsWeek(readoutsTemperature, readoutsPressure, readoutsHumidity, readoutsTime);
+            getReadoutsWeek(readouts);
         } else if (subType.compare("month") == 0) {
-            getReadoutsMonth(readoutsTemperature, readoutsPressure, readoutsHumidity, readoutsTime);
+            getReadoutsMonth(readouts);
         } else if (subType.compare("year") == 0) {
 
         } else {
@@ -311,11 +277,32 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
         reply["type"] = "pushDataBuffer";
         reply["subType"] = subType;
         reply["data"] = {
-            {"temperature", readoutsTemperature},
-            {"pressure", readoutsPressure},
-            {"humidity", readoutsHumidity},
-            {"time", readoutsTime}
+            {"temperature", readouts.temperature,},
+            {"temperatureMin", readouts.temperatureMin,},
+            {"temperatureMax", readouts.temperatureMax,},
+            {"pressure", readouts.pressure},
+            {"pressureMin", readouts.pressureMin},
+            {"pressureMax", readouts.pressureMax},
+            {"humidity", readouts.humidity},
+            {"humidityMin", readouts.humidityMin},
+            {"humidityMax", readouts.humidityMax},
+            {"time", readouts.time}
         };
+
+        LOG_I("Size of message is " + std::to_string(reply.dump().size()) + " characters.");
+
+
+        //        std::string path = "msg_dump.json";
+        //        std::ofstream out_file;
+        //        out_file.open(path, std::ios::out);
+        //        if (!out_file.is_open()) {
+        //            LOG_E("opening file " + path + ": " + std::string(strerror(errno)));
+        //            return -1;
+        //        }
+        //
+        //        out_file << reply.dump(3);
+        //        out_file.close();
+
 
     } else {
         LOG_E("processMsgFromGui() unknown type of message");
@@ -476,8 +463,88 @@ int DeviceBME280::removeOldReadouts() {
     return deleted;
 }
 
-int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure,
-        std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime) {
+int DeviceBME280::getReadoutsDay(readouts_averaged &readouts) {
+    if (readoutsBuffer.empty()) {
+        LOG_W("processMsgFromGui() readout buffer is empty");
+        return -1;
+    }
+
+    //    float sumTemperature = 0;
+    //    float minTemperature = std::numeric_limits<float>::max();
+    //    float maxTemperature = std::numeric_limits<float>::lowest();
+    //    float sumPressure = 0;
+    //    float minPressure = std::numeric_limits<float>::max();
+    //    float maxPressure = std::numeric_limits<float>::lowest();
+    //    float sumHumidity = 0;
+    //    float minHumidity = std::numeric_limits<float>::max();
+    //    float maxHumidity = std::numeric_limits<float>::lowest();
+    //    struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
+    int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
+    size = size < 2 ? 1 : size;
+    for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
+        float sumTemperature = 0;
+        float minTemperature = std::numeric_limits<float>::max();
+        float maxTemperature = std::numeric_limits<float>::lowest();
+        float sumPressure = 0;
+        float minPressure = std::numeric_limits<float>::max();
+        float maxPressure = std::numeric_limits<float>::lowest();
+        float sumHumidity = 0;
+        float minHumidity = std::numeric_limits<float>::max();
+        float maxHumidity = std::numeric_limits<float>::lowest();
+        struct timeval sumTime = readoutsBuffer[i].time;
+        int sumCounter = 0;
+
+        for (int j = 0; j < size; ++j) {
+            if (i < 0) {
+                break;
+            }
+            sumTemperature += readoutsBuffer[i].temperature;
+            sumPressure += readoutsBuffer[i].pressure;
+            sumHumidity += readoutsBuffer[i].humidity;
+
+            if (readoutsBuffer[i].temperature < minTemperature)
+                minTemperature = readoutsBuffer[i].temperature;
+            if (readoutsBuffer[i].temperature > maxTemperature)
+                maxTemperature = readoutsBuffer[i].temperature;
+
+            if (readoutsBuffer[i].pressure < minPressure)
+                minPressure = readoutsBuffer[i].pressure;
+            if (readoutsBuffer[i].pressure > maxPressure)
+                maxPressure = readoutsBuffer[i].pressure;
+
+            if (readoutsBuffer[i].humidity < minHumidity)
+                minHumidity = readoutsBuffer[i].humidity;
+            if (readoutsBuffer[i].humidity > maxHumidity)
+                maxHumidity = readoutsBuffer[i].humidity;
+
+            i--;
+            sumCounter++;
+        }
+        readouts.temperature.insert(readouts.temperature.begin(), round(sumTemperature * 100 / sumCounter));
+        readouts.temperatureMin.insert(readouts.temperatureMin.begin(), round(minTemperature * 100));
+        readouts.temperatureMax.insert(readouts.temperatureMax.begin(), round(maxTemperature * 100));
+        readouts.pressure.insert(readouts.pressure.begin(), round(sumPressure / sumCounter));
+        readouts.pressureMin.insert(readouts.pressureMin.begin(), round(minPressure));
+        readouts.pressureMax.insert(readouts.pressureMax.begin(), round(maxPressure));
+        readouts.humidity.insert(readouts.humidity.begin(), round(sumHumidity * 100 / sumCounter));
+        readouts.humidityMin.insert(readouts.humidityMin.begin(), round(minHumidity * 100));
+        readouts.humidityMax.insert(readouts.humidityMax.begin(), round(maxHumidity * 100));
+        readouts.time.insert(readouts.time.begin(), timeToStringLocal(sumTime));
+
+        //        sumTemperature = 0;
+        //        minTemperature = std::numeric_limits<float>::max();
+        //        maxTemperature = std::numeric_limits<float>::lowest();
+        //        sumPressure = 0;
+        //        minPressure = std::numeric_limits<float>::max();
+        //        maxPressure = std::numeric_limits<float>::lowest();
+        //        sumHumidity = 0;
+        //        minHumidity = std::numeric_limits<float>::max();
+        //        maxHumidity = std::numeric_limits<float>::lowest();
+    }
+    LOG_I("buffer size: " + std::to_string(readouts.temperature.size()));
+}
+
+int DeviceBME280::getReadoutsWeek(readouts_averaged &readouts) {
 
     using namespace std;
     LOG_I("start");
@@ -501,8 +568,14 @@ int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::ve
             string line;
             int lastHour = -1;
             float sumTemperature = 0;
+            float minTemperature = std::numeric_limits<float>::max();
+            float maxTemperature = std::numeric_limits<float>::lowest();
             float sumPressure = 0;
+            float minPressure = std::numeric_limits<float>::max();
+            float maxPressure = std::numeric_limits<float>::lowest();
             float sumHumidity = 0;
+            float minHumidity = std::numeric_limits<float>::max();
+            float maxHumidity = std::numeric_limits<float>::lowest();
             int sumCounter = 0;
             readoutString rs;
 
@@ -530,23 +603,56 @@ int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::ve
                     //t.tv_sec += 3600;
                     readoutTime = timeToStringLocal(t);
 
-                    readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                    readoutsPressure.push_back((sumPressure / sumCounter));
-                    readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
-                    readoutsTime.push_back(readoutTime);
+                    readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                    readouts.temperatureMin.push_back(round(minTemperature * 100));
+                    readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                    readouts.pressure.push_back((sumPressure / sumCounter));
+                    readouts.pressureMin.push_back(minPressure);
+                    readouts.pressureMax.push_back(maxPressure);
+                    readouts.humidity.push_back((sumHumidity * 100 / sumCounter));
+                    readouts.humidityMin.push_back(minHumidity * 100);
+                    readouts.humidityMax.push_back(maxHumidity * 100);
+                    readouts.time.push_back(readoutTime);
 
                     lastHour = hour;
                     sumTemperature = 0;
+                    minTemperature = std::numeric_limits<float>::max();
+                    maxTemperature = std::numeric_limits<float>::lowest();
                     sumPressure = 0;
+                    minPressure = std::numeric_limits<float>::max();
+                    maxPressure = std::numeric_limits<float>::lowest();
                     sumHumidity = 0;
+                    minHumidity = std::numeric_limits<float>::max();
+                    maxHumidity = std::numeric_limits<float>::lowest();
+
                     sumCounter = 0;
                     //                    LOG_I("time: " + readoutTime);
                 }
 
 
-                sumTemperature += stof(rs.temperature);
-                sumPressure += stof(rs.pressure);
-                sumHumidity += stof(rs.humidity);
+                float temperature = stof(rs.temperature);
+                float pressure = stof(rs.pressure);
+                float humidity = stof(rs.humidity);
+
+                sumTemperature += temperature;
+                sumPressure += pressure;
+                sumHumidity += humidity;
+
+                if (temperature < minTemperature)
+                    minTemperature = temperature;
+                if (temperature > maxTemperature)
+                    maxTemperature = temperature;
+
+                if (pressure < minPressure)
+                    minPressure = pressure;
+                if (pressure > maxPressure)
+                    maxPressure = pressure;
+
+                if (humidity < minHumidity)
+                    minHumidity = humidity;
+                if (humidity > maxHumidity)
+                    maxHumidity = humidity;
+
                 sumCounter++;
             }
             if (rs.isValid) {
@@ -555,22 +661,29 @@ int DeviceBME280::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::ve
                 timeval t = stringToTime(readoutTime);
                 //t.tv_sec += 3600;
                 readoutTime = timeToStringLocal(t);
-                readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                readoutsPressure.push_back((sumPressure / sumCounter));
-                readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
-                readoutsTime.push_back(readoutTime);
+                readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                readouts.temperatureMin.push_back(round(minTemperature * 100));
+                readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                readouts.pressure.push_back((sumPressure / sumCounter));
+                readouts.pressureMin.push_back(minPressure);
+                readouts.pressureMax.push_back(maxPressure);
+                readouts.humidity.push_back((sumHumidity * 100 / sumCounter));
+                readouts.humidityMin.push_back(minHumidity * 100);
+                readouts.humidityMax.push_back(maxHumidity * 100);
+                readouts.time.push_back(readoutTime);
+
                 //                LOG_I("time: " + readoutTime);
             }
         }
         fs.close();
 
     }
-    LOG_I("buffer size: " + to_string(readoutsTemperature.size()));
+    LOG_I("buffer size: " + to_string(readouts.temperature.size()));
     LOG_I("done");
 
 }
 
-int DeviceBME280::getReadoutsMonth(std::vector<int>& readoutsTemperature, std::vector<int>& readoutsPressure, std::vector<int>& readoutsHumidity, std::vector<std::string>& readoutsTime) {
+int DeviceBME280::getReadoutsMonth(readouts_averaged &readouts) {
     using namespace std;
 
     LOG_I("start");
@@ -594,8 +707,14 @@ int DeviceBME280::getReadoutsMonth(std::vector<int>& readoutsTemperature, std::v
             string line;
             int lastHour = -1;
             float sumTemperature = 0;
+            float minTemperature = std::numeric_limits<float>::max();
+            float maxTemperature = std::numeric_limits<float>::lowest();
             float sumPressure = 0;
+            float minPressure = std::numeric_limits<float>::max();
+            float maxPressure = std::numeric_limits<float>::lowest();
             float sumHumidity = 0;
+            float minHumidity = std::numeric_limits<float>::max();
+            float maxHumidity = std::numeric_limits<float>::lowest();
             int sumCounter = 0;
             readoutString rs;
 
@@ -623,23 +742,56 @@ int DeviceBME280::getReadoutsMonth(std::vector<int>& readoutsTemperature, std::v
                     //t.tv_sec += 3600;
                     readoutTime = timeToStringLocal(t);
 
-                    readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                    readoutsPressure.push_back((sumPressure / sumCounter));
-                    readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
-                    readoutsTime.push_back(readoutTime);
+                    readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                    readouts.temperatureMin.push_back(round(minTemperature * 100));
+                    readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                    readouts.pressure.push_back((sumPressure / sumCounter));
+                    readouts.pressureMin.push_back(minPressure);
+                    readouts.pressureMax.push_back(maxPressure);
+                    readouts.humidity.push_back((sumHumidity * 100 / sumCounter));
+                    readouts.humidityMin.push_back(minHumidity * 100);
+                    readouts.humidityMax.push_back(maxHumidity * 100);
+                    readouts.time.push_back(readoutTime);
 
                     lastHour = hour;
                     sumTemperature = 0;
+                    minTemperature = std::numeric_limits<float>::max();
+                    maxTemperature = std::numeric_limits<float>::lowest();
                     sumPressure = 0;
+                    minPressure = std::numeric_limits<float>::max();
+                    maxPressure = std::numeric_limits<float>::lowest();
                     sumHumidity = 0;
+                    minHumidity = std::numeric_limits<float>::max();
+                    maxHumidity = std::numeric_limits<float>::lowest();
+
                     sumCounter = 0;
                     //                    LOG_I("time: " + readoutTime);
                 }
 
 
-                sumTemperature += stof(rs.temperature);
-                sumPressure += stof(rs.pressure);
-                sumHumidity += stof(rs.humidity);
+                float temperature = stof(rs.temperature);
+                float pressure = stof(rs.pressure);
+                float humidity = stof(rs.humidity);
+
+                sumTemperature += temperature;
+                sumPressure += pressure;
+                sumHumidity += humidity;
+
+                if (temperature < minTemperature)
+                    minTemperature = temperature;
+                if (temperature > maxTemperature)
+                    maxTemperature = temperature;
+
+                if (pressure < minPressure)
+                    minPressure = pressure;
+                if (pressure > maxPressure)
+                    maxPressure = pressure;
+
+                if (humidity < minHumidity)
+                    minHumidity = humidity;
+                if (humidity > maxHumidity)
+                    maxHumidity = humidity;
+
                 sumCounter++;
             }
             if (rs.isValid) {
@@ -648,17 +800,23 @@ int DeviceBME280::getReadoutsMonth(std::vector<int>& readoutsTemperature, std::v
                 timeval t = stringToTime(readoutTime);
                 //t.tv_sec += 3600;
                 readoutTime = timeToStringLocal(t);
-                readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                readoutsPressure.push_back((sumPressure / sumCounter));
-                readoutsHumidity.push_back((sumHumidity * 100 / sumCounter));
-                readoutsTime.push_back(readoutTime);
+                readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                readouts.temperatureMin.push_back(round(minTemperature * 100));
+                readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                readouts.pressure.push_back((sumPressure / sumCounter));
+                readouts.pressureMin.push_back(minPressure);
+                readouts.pressureMax.push_back(maxPressure);
+                readouts.humidity.push_back((sumHumidity * 100 / sumCounter));
+                readouts.humidityMin.push_back(minHumidity * 100);
+                readouts.humidityMax.push_back(maxHumidity * 100);
+                readouts.time.push_back(readoutTime);
                 //                LOG_I("time: " + readoutTime);
             }
         }
         fs.close();
 
     }
-    LOG_I("buffer size: " + to_string(readoutsTemperature.size()));
+    LOG_I("buffer size: " + to_string(readouts.temperature.size()));
     LOG_I("done");
     return 0;
 }

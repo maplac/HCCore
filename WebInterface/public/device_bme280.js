@@ -7,8 +7,14 @@ function DeviceBME280(id) {
     this.voltage = 0;
     this.data = {
         temperature: [],
+        temperatureMin: [],
+		temperatureMax: [],
         pressure: [],
+        pressureMin: [],
+        pressureMax: [],
         humidity: [],
+        humidityMin: [],
+        humidityMax: [],
         time: []
     };
     this.selectedView = "day";
@@ -40,8 +46,14 @@ DeviceBME280.prototype.createDevicePanel = function (msg) {
 
 DeviceBME280.prototype.newDataReceived = function (msg) {
     this.temperature = msg.data.temperature;
+    this.temperatureMin = msg.data.temperatureMin;
+    this.temperatureMax = msg.data.temperatureMax;
     this.pressure = msg.data.pressure;
+    this.pressureMin = msg.data.pressureMin;
+    this.pressureMax = msg.data.pressureMax;
     this.humidity = msg.data.humidity;
+    this.humidityMin = msg.data.humidityMin;
+    this.humidityMax = msg.data.humidityMax;
     this.voltage = msg.data.voltage;
     this.lastConnected = msg.lastConnected;
     document.getElementById('device_panel_temperature').innerHTML = Math.round(this.temperature * 100) / 100 + " &degC";
@@ -52,7 +64,6 @@ DeviceBME280.prototype.newDataReceived = function (msg) {
 };
 
 DeviceBME280.prototype.onButtonPress = function (type) {
-    console.log("pressed: " + type);
     var msg = {};
     msg.desId = this.id;
     msg.srcId = clientId;
@@ -102,8 +113,12 @@ DeviceBME280.prototype.dataBufferReceived = function (msg) {
         this.data = msg.data;
         for (var i = 0; i < this.data.time.length; i++) {
             this.data.temperature[i] = this.data.temperature[i] / 100;
+            this.data.temperatureMin[i] = this.data.temperatureMin[i] / 100;
+            this.data.temperatureMax[i] = this.data.temperatureMax[i] / 100;
             //this.data.pressure[i] = this.data.pressure[i];
             this.data.humidity[i] = this.data.humidity[i] / 100;
+            this.data.humidityMin[i] = this.data.humidityMin[i] / 100;
+            this.data.humidityMax[i] = this.data.humidityMax[i] / 100;
         }
         // console.log(this.data.temperature);
         this.updateGraphs();
@@ -119,8 +134,8 @@ DeviceBME280.prototype.setParameters = function (device) {
 };
 
 DeviceBME280.prototype.updateGraphs = function () {
-    var max = Math.max(...this.data.temperature);
-    var min = Math.min(...this.data.temperature);
+    var max = Math.max(...this.data.temperatureMax);
+    var min = Math.min(...this.data.temperatureMin);
     var mean = (max + min) / 2;
     var deviation = mean / 20;
     var yRange = [mean - deviation, mean + deviation];
@@ -136,10 +151,31 @@ DeviceBME280.prototype.updateGraphs = function () {
         y: this.data.temperature,
         // name: 'temperature',
         type: 'scatter',
-        mode: 'lines+markers',
+        mode: 'lines',
         line: {
+			width: 3,
             color: '#ff7f0e'
-        },
+        }
+    };
+     var traceMin = {
+        x: this.data.time,
+        y: this.data.temperatureMin,
+        // name: 'temperature',
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+            color: '#b25809'
+        }
+    };
+     var traceMax = {
+        x: this.data.time,
+        y: this.data.temperatureMax,
+        // name: 'temperature',
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+            color: '#b25809'
+        }
     };
     var layout = {
         /*title: 'temperature [°C]',
@@ -187,14 +223,14 @@ DeviceBME280.prototype.updateGraphs = function () {
             l: 50,
             r: 100,
             t: 10,
-            b: 60,
+            b: 60
         }
 
     };
-    Plotly.newPlot(document.getElementById('graph_temperature'), [trace], layout);
+    Plotly.newPlot(document.getElementById('graph_temperature'), [traceMin, traceMax, trace], layout);
 
-    max = Math.max(...this.data.humidity);
-    min = Math.min(...this.data.humidity);
+    max = Math.max(...this.data.humidityMax);
+    min = Math.min(...this.data.humidityMin);
     mean = (max + min) / 2;
     deviation = mean / 20;
     yRange = [mean - deviation, mean + deviation];
@@ -206,9 +242,11 @@ DeviceBME280.prototype.updateGraphs = function () {
     }
 
     trace.y = this.data.humidity;
+    traceMin.y = this.data.humidityMin;
+	traceMax.y = this.data.humidityMax;
     layout.yaxis.title = 'Humidity [%]';
     layout.yaxis.range = yRange;
-    Plotly.newPlot(document.getElementById('graph_humidity'), [trace], layout);
+    Plotly.newPlot(document.getElementById('graph_humidity'), [traceMin, traceMax, trace], layout);
 
     max = Math.max(...this.data.pressure);
     min = Math.min(...this.data.pressure);

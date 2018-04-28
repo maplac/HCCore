@@ -46,6 +46,19 @@ private:
         float voltage;
     }readout;
     
+    typedef struct {
+        std::vector<std::string> time;
+        std::vector<int> temperature;
+        std::vector<int> temperatureMin;
+        std::vector<int> temperatureMax;
+        std::vector<int> pressure;
+        std::vector<int> pressureMin;
+        std::vector<int> pressureMax;
+        std::vector<int> humidity;
+        std::vector<int> humidityMin;
+        std::vector<int> humidityMax;
+    }readouts_averaged;
+    
     typedef struct readoutString_tag{
         std::string date;
         std::string hours;
@@ -65,12 +78,10 @@ private:
     int saveLastReadout();
     int removeOldReadouts();
     readout stringToReadout(const std::vector<std::string> &cells);
-    int getReadoutsWeek(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure, 
-            std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime);
-    int getReadoutsMonth(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure, 
-            std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime);
-    int getReadoutsYear(std::vector<int> &readoutsTemperature, std::vector<int> &readoutsPressure, 
-            std::vector<int> &readoutsHumidity, std::vector<std::string> &readoutsTime);
+    int getReadoutsDay(readouts_averaged &readouts);
+    int getReadoutsWeek(readouts_averaged &readouts);
+    int getReadoutsMonth(readouts_averaged &readouts);
+    int getReadoutsYear(readouts_averaged &readouts);
      readoutString splitReadout(std::string line);
 };
 
