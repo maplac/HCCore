@@ -54,6 +54,12 @@ private:
         std::string voltage;
         bool isValid = true;
     } readoutString;
+    typedef struct {
+        std::vector<std::string> time;
+        std::vector<int> temperature;
+        std::vector<int> temperatureMin;
+        std::vector<int> temperatureMax;
+    }readouts_averaged;
     readout lastReadout;
     std::deque<readout> readoutsBuffer;
     int packetCounter;
@@ -62,9 +68,10 @@ private:
     int saveLastReadout();
     int removeOldReadouts();
     readout stringToReadout(const std::vector<std::string> &cells);
-    int getReadoutsWeek(std::vector<int> &readoutsTemperature, std::vector<std::string> &readoutsTime);
-    int getReadoutsMonth(std::vector<int> &readoutsTemperature, std::vector<std::string> &readoutsTime);
-//    int getReadoutsYear(std::vector<int> &readoutsTemperature, std::vector<std::string> &readoutsTime);
+    int getReadoutsDay(readouts_averaged &readouts);
+    int getReadoutsWeek(readouts_averaged &readouts);
+    int getReadoutsMonth(readouts_averaged &readouts);
+    int getReadoutsYear(readouts_averaged &readouts);
     readoutString splitReadout(std::string line);
 
 };

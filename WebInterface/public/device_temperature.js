@@ -5,6 +5,8 @@ function DeviceTemperature(id) {
     this.voltage = 0;
     this.data = {
         temperature: [],
+        temperatureMin: [],
+        temperatureMax: [],
         time: []
     };
     this.selectedView = "day";
@@ -32,6 +34,8 @@ DeviceTemperature.prototype.createDevicePanel = function (msg) {
 
 DeviceTemperature.prototype.newDataReceived = function (msg) {
     this.temperature = msg.data.temperature;
+    this.temperatureMin = msg.data.temperatureMin;
+    this.temperatureMax = msg.data.temperatureMax;
     this.voltage = msg.data.voltage;
     this.lastConnected = msg.lastConnected;
     document.getElementById('device_panel_temperature').innerHTML = Math.round(this.temperature * 100) / 100 + " &degC";
@@ -90,6 +94,8 @@ DeviceTemperature.prototype.dataBufferReceived = function (msg) {
         this.data = msg.data;
         for (var i = 0; i < this.data.time.length; i++) {
             this.data.temperature[i] = this.data.temperature[i] / 100;
+            this.data.temperatureMin[i] = this.data.temperatureMin[i] / 100;
+            this.data.temperatureMax[i] = this.data.temperatureMax[i] / 100;
         }
         // console.log(this.data.temperature);
         this.updateGraphs();
@@ -103,8 +109,8 @@ DeviceTemperature.prototype.setParameters = function (device) {
 };
 
 DeviceTemperature.prototype.updateGraphs = function () {
-    var max = Math.max(...this.data.temperature);
-    var min = Math.min(...this.data.temperature);
+    var max = Math.max(...this.data.temperatureMax);
+    var min = Math.min(...this.data.temperatureMin);
     var mean = (max + min) / 2;
     var deviation = mean / 20;
     var yRange = [mean - deviation, mean + deviation];
@@ -120,10 +126,31 @@ DeviceTemperature.prototype.updateGraphs = function () {
         y: this.data.temperature,
         // name: 'temperature',
         type: 'scatter',
-        mode: 'lines+markers',
+        mode: 'lines',
         line: {
+			width: 3,
             color: '#ff7f0e'
-        },
+        }
+    };
+     var traceMin = {
+        x: this.data.time,
+        y: this.data.temperatureMin,
+        // name: 'temperature',
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+            color: '#b25809'
+        }
+    };
+     var traceMax = {
+        x: this.data.time,
+        y: this.data.temperatureMax,
+        // name: 'temperature',
+        type: 'scatter',
+        mode: 'lines',
+        line: {
+            color: '#b25809'
+        }
     };
     var layout = {
         /*title: 'temperature [°C]',
@@ -171,11 +198,11 @@ DeviceTemperature.prototype.updateGraphs = function () {
             l: 50,
             r: 100,
             t: 10,
-            b: 60,
+            b: 60
         }
 
     };
-    Plotly.newPlot(document.getElementById('graph_temperature'), [trace], layout);
+    Plotly.newPlot(document.getElementById('graph_temperature'), [traceMin, traceMax, trace], layout);
 };
 
 /*

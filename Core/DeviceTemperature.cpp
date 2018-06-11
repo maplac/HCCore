@@ -22,7 +22,6 @@
 #define NUMBER_POINTS_IN_GRAPH  200
 using json = nlohmann::json;
 
-
 DeviceTemperature::DeviceTemperature(int id, Interface interface) : DeviceGeneric(id, Type::Temperature, interface) {
     status = "unknown";
     packetCounter = -1;
@@ -31,7 +30,6 @@ DeviceTemperature::DeviceTemperature(int id, Interface interface) : DeviceGeneri
 
 DeviceTemperature::~DeviceTemperature() {
 }
-
 
 int DeviceTemperature::setParameter(const json &parameter) {
     int res = DeviceGeneric::setParameter(parameter);
@@ -130,7 +128,7 @@ int DeviceTemperature::processMsgFromDevice(const nlohmann::json& msg, nlohmann:
                 ss << " degC, received value = " << currentReadout.temperature << " degC.";
                 LOG_W(ss.str());
             }
-            
+
             /*
             // if some readouts were lost
             if (receivedLostReadouts != lostReadouts) {
@@ -146,7 +144,7 @@ int DeviceTemperature::processMsgFromDevice(const nlohmann::json& msg, nlohmann:
              */
             // save received readouts
             lastReadout.temperature = currentReadout.temperature;
-                        lastReadout.voltage = currentReadout.voltage;
+            lastReadout.voltage = currentReadout.voltage;
             lastReadout.time = currentReadout.time;
             lostReadouts = receivedLostReadouts;
             isWaitingForFirstData = false;
@@ -224,38 +222,14 @@ int DeviceTemperature::processMsgFromGui(const nlohmann::json& msg, nlohmann::js
             subType = "day";
         }
 
-        std::vector<int> readoutsTemperature;
-                std::vector<std::string> readoutsTime;
+        readouts_averaged readouts;
 
         if (subType.compare("day") == 0) {
-
-            if (readoutsBuffer.empty()) {
-                LOG_W("processMsgFromGui() readout buffer is empty");
-                return -1;
-            }
-
-            float sumTemperature = 0;
-            struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
-            int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
-            size = size < 2 ? 1 : size;
-            for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
-                sumTime = readoutsBuffer[i].time;
-                for (int j = 0; j < size; ++j) {
-                    if (i < 0) {
-                        break;
-                    }
-                    sumTemperature += readoutsBuffer[i].temperature;
-                    i--;
-                }
-                readoutsTemperature.insert(readoutsTemperature.begin(), round(sumTemperature * 100 / size));
-                readoutsTime.insert(readoutsTime.begin(), timeToStringLocal(sumTime));
-                sumTemperature = 0;
-            }
-
+            getReadoutsDay(readouts);
         } else if (subType.compare("week") == 0) {
-            getReadoutsWeek(readoutsTemperature, readoutsTime);
+            getReadoutsWeek(readouts);
         } else if (subType.compare("month") == 0) {
-            getReadoutsMonth(readoutsTemperature, readoutsTime);
+            getReadoutsMonth(readouts);
         } else if (subType.compare("year") == 0) {
 
         } else {
@@ -268,9 +242,13 @@ int DeviceTemperature::processMsgFromGui(const nlohmann::json& msg, nlohmann::js
         reply["type"] = "pushDataBuffer";
         reply["subType"] = subType;
         reply["data"] = {
-            {"temperature", readoutsTemperature},
-            {"time", readoutsTime}
+            {"temperature", readouts.temperature,},
+            {"temperatureMin", readouts.temperatureMin,},
+            {"temperatureMax", readouts.temperatureMax,},
+            {"time", readouts.time}
         };
+
+        LOG_I("Size of message is " + std::to_string(reply.dump().size()) + " characters.");
 
     } else {
         LOG_E("processMsgFromGui() unknown type of message");
@@ -426,7 +404,64 @@ int DeviceTemperature::removeOldReadouts() {
     return deleted;
 }
 
-int DeviceTemperature::getReadoutsWeek(std::vector<int> &readoutsTemperature, std::vector<std::string> &readoutsTime) {
+int DeviceTemperature::getReadoutsDay(readouts_averaged &readouts) {
+    if (readoutsBuffer.empty()) {
+        LOG_W("processMsgFromGui() readout buffer is empty");
+        return -1;
+    }
+
+    //    float sumTemperature = 0;
+    //    float minTemperature = std::numeric_limits<float>::max();
+    //    float maxTemperature = std::numeric_limits<float>::lowest();
+    //    float sumPressure = 0;
+    //    float minPressure = std::numeric_limits<float>::max();
+    //    float maxPressure = std::numeric_limits<float>::lowest();
+    //    float sumHumidity = 0;
+    //    float minHumidity = std::numeric_limits<float>::max();
+    //    float maxHumidity = std::numeric_limits<float>::lowest();
+    //    struct timeval sumTime = readoutsBuffer[readoutsBuffer.size() - 1].time;
+    int size = floor(readoutsBuffer.size() / NUMBER_POINTS_IN_GRAPH);
+    size = size < 2 ? 1 : size;
+    for (int i = readoutsBuffer.size() - 1; i > (size - 2);) {
+        float sumTemperature = 0;
+        float minTemperature = std::numeric_limits<float>::max();
+        float maxTemperature = std::numeric_limits<float>::lowest();
+        struct timeval sumTime = readoutsBuffer[i].time;
+        int sumCounter = 0;
+
+        for (int j = 0; j < size; ++j) {
+            if (i < 0) {
+                break;
+            }
+            sumTemperature += readoutsBuffer[i].temperature;
+
+            if (readoutsBuffer[i].temperature < minTemperature)
+                minTemperature = readoutsBuffer[i].temperature;
+            if (readoutsBuffer[i].temperature > maxTemperature)
+                maxTemperature = readoutsBuffer[i].temperature;
+
+            i--;
+            sumCounter++;
+        }
+        readouts.temperature.insert(readouts.temperature.begin(), round(sumTemperature * 100 / sumCounter));
+        readouts.temperatureMin.insert(readouts.temperatureMin.begin(), round(minTemperature * 100));
+        readouts.temperatureMax.insert(readouts.temperatureMax.begin(), round(maxTemperature * 100));
+        readouts.time.insert(readouts.time.begin(), timeToStringLocal(sumTime));
+
+        //        sumTemperature = 0;
+        //        minTemperature = std::numeric_limits<float>::max();
+        //        maxTemperature = std::numeric_limits<float>::lowest();
+        //        sumPressure = 0;
+        //        minPressure = std::numeric_limits<float>::max();
+        //        maxPressure = std::numeric_limits<float>::lowest();
+        //        sumHumidity = 0;
+        //        minHumidity = std::numeric_limits<float>::max();
+        //        maxHumidity = std::numeric_limits<float>::lowest();
+    }
+    LOG_I("buffer size: " + std::to_string(readouts.temperature.size()));
+}
+
+int DeviceTemperature::getReadoutsWeek(readouts_averaged &readouts) {
 
     using namespace std;
     LOG_I("start");
@@ -450,6 +485,8 @@ int DeviceTemperature::getReadoutsWeek(std::vector<int> &readoutsTemperature, st
             string line;
             int lastHour = -1;
             float sumTemperature = 0;
+            float minTemperature = std::numeric_limits<float>::max();
+            float maxTemperature = std::numeric_limits<float>::lowest();
             int sumCounter = 0;
             readoutString rs;
 
@@ -477,17 +514,31 @@ int DeviceTemperature::getReadoutsWeek(std::vector<int> &readoutsTemperature, st
                     //t.tv_sec += 3600;
                     readoutTime = timeToStringLocal(t);
 
-                    readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                    readoutsTime.push_back(readoutTime);
+                    readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                    readouts.temperatureMin.push_back(round(minTemperature * 100));
+                    readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                    readouts.time.push_back(readoutTime);
 
                     lastHour = hour;
                     sumTemperature = 0;
+                    minTemperature = std::numeric_limits<float>::max();
+                    maxTemperature = std::numeric_limits<float>::lowest();
+
                     sumCounter = 0;
                     //                    LOG_I("time: " + readoutTime);
                 }
 
 
-                sumTemperature += stof(rs.temperature);
+                float temperature = stof(rs.temperature);
+
+                sumTemperature += temperature;
+
+                if (temperature < minTemperature)
+                    minTemperature = temperature;
+                if (temperature > maxTemperature)
+                    maxTemperature = temperature;
+
+
                 sumCounter++;
             }
             if (rs.isValid) {
@@ -496,20 +547,23 @@ int DeviceTemperature::getReadoutsWeek(std::vector<int> &readoutsTemperature, st
                 timeval t = stringToTime(readoutTime);
                 //t.tv_sec += 3600;
                 readoutTime = timeToStringLocal(t);
-                readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                readoutsTime.push_back(readoutTime);
+                readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                readouts.temperatureMin.push_back(round(minTemperature * 100));
+                readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                readouts.time.push_back(readoutTime);
+
                 //                LOG_I("time: " + readoutTime);
             }
         }
         fs.close();
 
     }
-    LOG_I("buffer size: " + to_string(readoutsTemperature.size()));
+    LOG_I("buffer size: " + to_string(readouts.temperature.size()));
     LOG_I("done");
 
 }
 
-int DeviceTemperature::getReadoutsMonth(std::vector<int>& readoutsTemperature, std::vector<std::string>& readoutsTime) {
+int DeviceTemperature::getReadoutsMonth(readouts_averaged &readouts) {
     using namespace std;
 
     LOG_I("start");
@@ -533,6 +587,8 @@ int DeviceTemperature::getReadoutsMonth(std::vector<int>& readoutsTemperature, s
             string line;
             int lastHour = -1;
             float sumTemperature = 0;
+            float minTemperature = std::numeric_limits<float>::max();
+            float maxTemperature = std::numeric_limits<float>::lowest();
             int sumCounter = 0;
             readoutString rs;
 
@@ -560,17 +616,30 @@ int DeviceTemperature::getReadoutsMonth(std::vector<int>& readoutsTemperature, s
                     //t.tv_sec += 3600;
                     readoutTime = timeToStringLocal(t);
 
-                    readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                    readoutsTime.push_back(readoutTime);
+                    readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                    readouts.temperatureMin.push_back(round(minTemperature * 100));
+                    readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                    readouts.time.push_back(readoutTime);
 
                     lastHour = hour;
                     sumTemperature = 0;
+                    minTemperature = std::numeric_limits<float>::max();
+                    maxTemperature = std::numeric_limits<float>::lowest();
+
                     sumCounter = 0;
                     //                    LOG_I("time: " + readoutTime);
                 }
 
 
-                sumTemperature += stof(rs.temperature);
+                float temperature = stof(rs.temperature);
+
+                sumTemperature += temperature;
+
+                if (temperature < minTemperature)
+                    minTemperature = temperature;
+                if (temperature > maxTemperature)
+                    maxTemperature = temperature;
+
                 sumCounter++;
             }
             if (rs.isValid) {
@@ -579,14 +648,17 @@ int DeviceTemperature::getReadoutsMonth(std::vector<int>& readoutsTemperature, s
                 timeval t = stringToTime(readoutTime);
                 //t.tv_sec += 3600;
                 readoutTime = timeToStringLocal(t);
-                readoutsTemperature.push_back(round(sumTemperature * 100 / sumCounter));
-                readoutsTime.push_back(readoutTime);
+                readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                readouts.temperatureMin.push_back(round(minTemperature * 100));
+                readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                readouts.time.push_back(readoutTime);
                 //                LOG_I("time: " + readoutTime);
             }
         }
         fs.close();
+
     }
-    LOG_I("buffer size: " + to_string(readoutsTemperature.size()));
+    LOG_I("buffer size: " + to_string(readouts.temperature.size()));
     LOG_I("done");
     return 0;
 }
