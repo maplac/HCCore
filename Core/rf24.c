@@ -13,6 +13,7 @@ version 2 as published by the Free Software Foundation.
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "rf24.h"
 #include "gpio.h"
@@ -365,7 +366,7 @@ uint8_t rf24_initialize(rf24_t * radio, char * spi_dev, uint8_t ce_pin, uint8_t 
 
   rf24_write_register(radio, SETUP_RETR, (0b0101 << ARD) | (0b1111 << ARC));
 
-  rf24_set_pa_level(radio, RF24_PA_MIN);
+  rf24_set_pa_level(radio, RF24_PA_MAX);
 
   /* Determine if radio is a p or non-p RF24 module and then
    * reset our data rate back to default value. This works
