@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <limits> // min/max value for a variable
+#include <iomanip> // setprecision
 
 #define READOUTS_BUFFER_PERIOD 86400 // in seconds
 #define NUMBER_POINTS_IN_GRAPH  200
@@ -882,4 +883,12 @@ DeviceBME280::readoutString DeviceBME280::splitReadout(std::string line) {
     //    cout << endl;
     //    cout << out.date << " " << out.temperature << endl;
     return out;
+}
+
+std::string DeviceBME280::getOledMessage() {
+    std::stringstream ss;
+    ss << std::to_string(id) << ": ";
+    ss << std::fixed << std::setprecision(1) << (round(lastReadout.temperature * 10)/10);
+    ss << "$C";
+    return ss.str();
 }

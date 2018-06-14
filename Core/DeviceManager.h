@@ -32,7 +32,7 @@ public:
      */
     int processMsgFromGui(const nlohmann::json &message, nlohmann::json &reply);
     
-    
+    std::vector<std::string> getOledMessages();
     
 private:
 //    std::vector<DeviceGeneric *> deviceList;

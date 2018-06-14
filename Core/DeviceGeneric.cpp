@@ -196,3 +196,6 @@ int DeviceGeneric::loadReadoutsBuffer() {
 
 }
 
+std::string DeviceGeneric::getOledMessage() {
+    return "";
+}

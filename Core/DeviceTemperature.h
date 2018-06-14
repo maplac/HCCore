@@ -36,6 +36,8 @@ public:
     virtual int processMsgFromDevice(const nlohmann::json &msg, nlohmann::json& reply);
     virtual int saveDeviceToFile() override;
     virtual int loadReadoutsBuffer();
+    virtual std::string getOledMessage() override;
+
 
 private:
 

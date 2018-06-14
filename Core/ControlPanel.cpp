@@ -156,6 +156,10 @@ void ControlPanel::run() {
     pfds[1].fd = fdButton2;
     pfds[1].events = POLLPRI | POLLERR;
 
+    int displayTimeout = 0;
+    bool displayActive = false;
+
+
     LOG_I("started");
     while (isRunning) {
         char c, d;
@@ -163,29 +167,43 @@ void ControlPanel::run() {
         read(fdButton1, &c, 1);
         lseek(fdButton2, 0, SEEK_SET);
         read(fdButton2, &d, 1);
-        int ret = poll(pfds, 2,1000);
-        //        sleep(1);
-        //lseek(fd, 0, SEEK_SET);
-        //read(fd, &c, 1);
-        //        printf("%d: ", i);
+        int ret = poll(pfds, 2, 1000);
+
+        if (displayActive) {
+            displayTimeout--;
+            if (displayTimeout < 0) {
+                displayActive = false;
+                oled.clear();
+                oled.home();
+            }
+        }
 
         if (ret == 0) {
-//            printf("Timeout\n");
+            //            printf("Timeout\n");
         } else {
 
             if (pfds[0].revents & POLLPRI) {
                 if (c == '0') {
-                    printf("button1: Release\n");
+                    //                    printf("button1: Release\n");
+
                 } else {
-                    printf("button1: Push\n");
+                    //                    printf("button1: Push\n");
                 }
 
             }
             if (pfds[1].revents & POLLPRI) {
                 if (d == '0') {
-                    printf("button2: Release\n");
+                    //                    printf("button2: Release\n");
+                    if (!displayActive) {
+                        std::vector<std::string> msgs = deviceManager.getOledMessages();
+                        for (auto e : msgs) {
+                            oled.println(e);
+                        }
+                        displayActive = true;
+                    }
+                    displayTimeout = 5;
                 } else {
-                    printf("button2: Push\n");
+                    //                    printf("button2: Push\n");
                 }
 
             }

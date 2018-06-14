@@ -226,3 +226,16 @@ int DeviceManager::processMsgFromGui(const nlohmann::json& message, nlohmann::js
     return device->processMsgFromGui(message, reply);
 
 }
+
+std::vector<std::string> DeviceManager::getOledMessages() {
+    std::vector<std::string> msgs;
+
+    for (auto const &ent : devicesList) {
+        std::string msg = ent.second->getOledMessage();
+        if (msg.empty())
+            continue;
+        msgs.push_back(msg);
+    }
+
+    return msgs;
+}

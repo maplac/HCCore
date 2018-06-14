@@ -721,3 +721,11 @@ DeviceTemperature::readoutString DeviceTemperature::splitReadout(std::string lin
     //    cout << out.date << " " << out.temperature << endl;
     return out;
 }
+
+std::string DeviceTemperature::getOledMessage() {
+    std::stringstream ss;
+    ss << std::to_string(id) << ": ";
+    ss << std::fixed << std::setprecision(1) << (round(lastReadout.temperature * 10) / 10);
+    ss << "$C";
+    return ss.str();
+}

@@ -6,7 +6,7 @@
  */
 
 #ifndef DEVICEGENERIC_H
-#define	DEVICEGENERIC_H
+#define DEVICEGENERIC_H
 
 #include "globalConstants.h"
 #include <unistd.h>
@@ -23,10 +23,15 @@ std::vector<std::string> split(const std::string& str, std::string delim);
 
 class DeviceGeneric {
 public:
-    
-    enum class Interface {none, rf24, udp};
-    enum class Type{none, BME280, Temperature};
-    
+
+    enum class Interface {
+        none, rf24, udp
+    };
+
+    enum class Type {
+        none, BME280, Temperature
+    };
+
     DeviceGeneric(int id, Type type, Interface interface);
     virtual ~DeviceGeneric();
 
@@ -48,14 +53,16 @@ public:
     virtual int setParameter(const nlohmann::json &parameter);
     virtual int saveDeviceToFile() = 0;
 
-    
+
     /** -1 error, 0 nothing, 1 something*/
     // called from mainLoop() when GUI send message
     virtual int processMsgFromGui(const nlohmann::json &msg, nlohmann::json& reply) = 0;
     // called from mainLoop() when remote device sends packet
     virtual int processMsgFromDevice(const nlohmann::json &msg, nlohmann::json& reply) = 0;
-    
+
     virtual int loadReadoutsBuffer();
+
+    virtual std::string getOledMessage();
 
 protected:
     std::string status;
@@ -69,5 +76,5 @@ protected:
     bool isWaitingForFirstData;
 };
 
-#endif	/* DEVICEGENERIC_H */
+#endif /* DEVICEGENERIC_H */
 
