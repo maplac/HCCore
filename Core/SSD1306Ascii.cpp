@@ -196,6 +196,9 @@ int SSD1306Ascii::writee(uint8_t ch) {
     uint8_t nr = (h + 7) / 8;
     uint8_t first = readFontByte(base++);
     uint8_t count = readFontByte(base++);
+    if(ch == 36){
+        ch = 128;
+    }
     if (ch < first || ch >= (first + count)) {
         if (ch == '\r') {
             setCol(0);
