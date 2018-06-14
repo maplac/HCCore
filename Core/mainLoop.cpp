@@ -27,6 +27,7 @@
 #include <fstream>
 #include "PeriodicTimer.h"
 #include "Rf24Server.h"
+#include "ControlPanel.h"
 
 #define THIS_DRIVER_ID          201
 
@@ -87,6 +88,12 @@ int mainLoop(zmq::context_t &zmqContext) {
     std::cout << "LOADED DEVICES end" << std::endl;
     deviceManager.saveDevices();
 
+    ControlPanel controlPanel(&zmqContext, deviceManager);
+    if(controlPanel.openDevice() < 0){
+        LOG_E("Opening control panel failed");
+    }
+    controlPanel.start();
+    
     // wait for the 0MQ connection
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -218,6 +225,8 @@ int mainLoop(zmq::context_t &zmqContext) {
     //********************************************************************
 
     rfServer.stop();
+    controlPanel.stop();
+    controlPanel.closeDevice();
     // clean up
     zmqSocketOut.close();
     zmqSocketIn.close();
