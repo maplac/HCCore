@@ -231,7 +231,7 @@ int DeviceTemperature::processMsgFromGui(const nlohmann::json& msg, nlohmann::js
         } else if (subType.compare("month") == 0) {
             getReadoutsMonth(readouts);
         } else if (subType.compare("year") == 0) {
-
+            getReadoutsYear(readouts);
         } else {
             LOG_W("processMsgFromGui() unknown subtype: " + subType);
             return -1;
@@ -645,6 +645,78 @@ int DeviceTemperature::getReadoutsMonth(readouts_averaged &readouts) {
             if (rs.isValid) {
                 string readoutTime;
                 readoutTime = rs.date + " " + to_string(lastHour) + ":30:00";
+                timeval t = stringToTime(readoutTime);
+                //t.tv_sec += 3600;
+                readoutTime = timeToStringLocal(t);
+                readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                readouts.temperatureMin.push_back(round(minTemperature * 100));
+                readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                readouts.time.push_back(readoutTime);
+                //                LOG_I("time: " + readoutTime);
+            }
+        }
+        fs.close();
+
+    }
+    LOG_I("buffer size: " + to_string(readouts.temperature.size()));
+    LOG_I("done");
+    return 0;
+}
+
+int DeviceTemperature::getReadoutsYear(readouts_averaged& readouts) {
+    using namespace std;
+
+    LOG_I("start of GetYear");
+    for (int day = 365; day >= 0; day--) {
+
+        struct timeval timeNow;
+        gettimeofday(&timeNow, NULL);
+        timeNow.tv_sec -= day * 24 * 60 * 60;
+        string timeStartString = timeToString(timeNow, "%Y-%m-%d");
+        string fileName = idToString(id) + "_" + typeToString(type) + "_" + timeStartString + ".csv";
+        string filePath = std::string(PATH_DATA) + idToString(id) + "/";
+
+        //LOG_I("file: " + fileName);
+        ifstream fs;
+        fs.open(filePath + fileName, std::ios::in);
+        if (!fs.is_open()) {
+            //LOG_W("getReadoutsWeek()  opening file " + filePath + fileName + ": " + string(strerror(errno)));
+            continue;
+        } else {
+            // read whole file
+            string line;
+            //            int lastHour = -1;
+            float sumTemperature = 0;
+            float minTemperature = std::numeric_limits<float>::max();
+            float maxTemperature = std::numeric_limits<float>::lowest();
+            int sumCounter = 0;
+            readoutString rs;
+
+            // get line from the file
+            while (getline(fs, line)) {
+                if(line.empty())
+                    continue;
+
+                rs = splitReadout(line);
+                if (!rs.isValid) {
+                    LOG_E("invalid line: " + line);
+                    continue;
+                }
+
+                float temperature = stof(rs.temperature);
+
+                sumTemperature += temperature;
+
+                if (temperature < minTemperature)
+                    minTemperature = temperature;
+                if (temperature > maxTemperature)
+                    maxTemperature = temperature;
+
+                sumCounter++;
+            }
+            if (rs.isValid) {
+                string readoutTime;
+                readoutTime = rs.date + " 12:00:00";
                 timeval t = stringToTime(readoutTime);
                 //t.tv_sec += 3600;
                 readoutTime = timeToStringLocal(t);

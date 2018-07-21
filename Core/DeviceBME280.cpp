@@ -267,7 +267,7 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
         } else if (subType.compare("month") == 0) {
             getReadoutsMonth(readouts);
         } else if (subType.compare("year") == 0) {
-
+            getReadoutsYear(readouts);
         } else {
             LOG_W("processMsgFromGui() unknown subtype: " + subType);
             return -1;
@@ -822,6 +822,104 @@ int DeviceBME280::getReadoutsMonth(readouts_averaged &readouts) {
     return 0;
 }
 
+int DeviceBME280::getReadoutsYear(readouts_averaged& readouts) {
+    using namespace std;
+
+    LOG_I("start of GetYear");
+    for (int day = 365; day >= 0; day--) {
+
+        struct timeval timeNow;
+        gettimeofday(&timeNow, NULL);
+        timeNow.tv_sec -= day * 24 * 60 * 60;
+        string timeStartString = timeToString(timeNow, "%Y-%m-%d");
+        string fileName = idToString(id) + "_" + typeToString(type) + "_" + timeStartString + ".csv";
+        string filePath = std::string(PATH_DATA) + idToString(id) + "/";
+
+        //LOG_I("file: " + fileName);
+        ifstream fs;
+        fs.open(filePath + fileName, std::ios::in);
+        if (!fs.is_open()) {
+            //LOG_W("getReadoutsWeek()  opening file " + filePath + fileName + ": " + string(strerror(errno)));
+            continue;
+        } else {
+            // read whole file
+            string line;
+            //            int lastHour = -1;
+            float sumTemperature = 0;
+            float minTemperature = std::numeric_limits<float>::max();
+            float maxTemperature = std::numeric_limits<float>::lowest();
+            float sumPressure = 0;
+            float minPressure = std::numeric_limits<float>::max();
+            float maxPressure = std::numeric_limits<float>::lowest();
+            float sumHumidity = 0;
+            float minHumidity = std::numeric_limits<float>::max();
+            float maxHumidity = std::numeric_limits<float>::lowest();
+            int sumCounter = 0;
+            readoutString rs;
+
+            // get line from the file
+            while (getline(fs, line)) {
+                if (line.empty())
+                    continue;
+
+                rs = splitReadout(line);
+                if (!rs.isValid) {
+                    LOG_E("invalid line: " + line);
+                    continue;
+                }
+
+                float temperature = stof(rs.temperature);
+                float pressure = stof(rs.pressure);
+                float humidity = stof(rs.humidity);
+
+                sumTemperature += temperature;
+                sumPressure += pressure;
+                sumHumidity += humidity;
+
+                if (temperature < minTemperature)
+                    minTemperature = temperature;
+                if (temperature > maxTemperature)
+                    maxTemperature = temperature;
+
+                if (pressure < minPressure)
+                    minPressure = pressure;
+                if (pressure > maxPressure)
+                    maxPressure = pressure;
+
+                if (humidity < minHumidity)
+                    minHumidity = humidity;
+                if (humidity > maxHumidity)
+                    maxHumidity = humidity;
+
+                sumCounter++;
+            }
+            if (rs.isValid) {
+                string readoutTime;
+                readoutTime = rs.date + " 12:00:00";
+                timeval t = stringToTime(readoutTime);
+                //t.tv_sec += 3600;
+                readoutTime = timeToStringLocal(t);
+                readouts.temperature.push_back(round(sumTemperature * 100 / sumCounter));
+                readouts.temperatureMin.push_back(round(minTemperature * 100));
+                readouts.temperatureMax.push_back(round(maxTemperature * 100));
+                readouts.pressure.push_back((sumPressure / sumCounter));
+                readouts.pressureMin.push_back(minPressure);
+                readouts.pressureMax.push_back(maxPressure);
+                readouts.humidity.push_back((sumHumidity * 100 / sumCounter));
+                readouts.humidityMin.push_back(minHumidity * 100);
+                readouts.humidityMax.push_back(maxHumidity * 100);
+                readouts.time.push_back(readoutTime);
+                //                LOG_I("time: " + readoutTime);
+            }
+        }
+        fs.close();
+
+    }
+    LOG_I("buffer size: " + to_string(readouts.temperature.size()));
+    LOG_I("done");
+    return 0;
+}
+
 DeviceBME280::readoutString DeviceBME280::splitReadout(std::string line) {
     // 2018-01-09 18:07:03, 19.68, 97324.7, 67.665, 1.383,
     // |    0   | 1  2  3   | 4 |  |  5  |  |  6 |  | 7 |
@@ -888,7 +986,7 @@ DeviceBME280::readoutString DeviceBME280::splitReadout(std::string line) {
 std::string DeviceBME280::getOledMessage() {
     std::stringstream ss;
     ss << std::to_string(id) << ": ";
-    ss << std::fixed << std::setprecision(1) << (round(lastReadout.temperature * 10)/10);
+    ss << std::fixed << std::setprecision(1) << (round(lastReadout.temperature * 10) / 10);
     ss << "$C";
     return ss.str();
 }
