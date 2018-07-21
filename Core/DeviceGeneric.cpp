@@ -38,6 +38,17 @@ json DeviceGeneric::getDevice() {
     return device;
 }
 
+nlohmann::json DeviceGeneric::getDeviceForWeb() {
+    json device;
+    device["id"] = id;
+    device["type"] = typeToString(type);
+    device["name"] = name;
+    device["description"] = description;
+    device["status"] = status;
+    device["lastConnected"] = timeToStringLocal(lastConnected);
+    return device;
+}
+
 int DeviceGeneric::getId() {
     return id;
 }

@@ -57,7 +57,7 @@ int DeviceBME280::setParameter(const json &parameter) {
 }
 
 nlohmann::json DeviceBME280::getDevice() {
-    json device = DeviceGeneric::getDevice();
+    json device = DeviceGeneric::getDeviceForWeb();
     device["temperature"] = lastReadout.temperature;
     device["pressure"] = lastReadout.pressure;
     device["humidity"] = lastReadout.humidity;

@@ -49,6 +49,7 @@ public:
 
     int getId();
     virtual nlohmann::json getDevice();
+    virtual nlohmann::json getDeviceForWeb();
     /** 0 parameter not found, 1 parameter changed*/
     virtual int setParameter(const nlohmann::json &parameter);
     virtual int saveDeviceToFile() = 0;

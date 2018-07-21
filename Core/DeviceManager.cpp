@@ -165,7 +165,7 @@ std::vector<int> DeviceManager::getDevicesIds() {
 json DeviceManager::getAllDevices() {
     std::vector<json> devicesJson;
     for (auto const &ent : devicesList) {
-        devicesJson.push_back(ent.second->getDevice());
+        devicesJson.push_back(ent.second->getDeviceForWeb());
     }
     return json(devicesJson);
 }

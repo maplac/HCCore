@@ -51,7 +51,7 @@ int DeviceTemperature::setParameter(const json &parameter) {
 }
 
 nlohmann::json DeviceTemperature::getDevice() {
-    json device = DeviceGeneric::getDevice();
+    json device = DeviceGeneric::getDeviceForWeb();
     device["temperature"] = lastReadout.temperature;
     device["voltage"] = lastReadout.voltage;
     return device;
