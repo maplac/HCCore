@@ -496,13 +496,18 @@ int DeviceTemperature::getReadoutsWeek(readouts_averaged &readouts) {
             float maxTemperature = std::numeric_limits<float>::lowest();
             int sumCounter = 0;
             readoutString rs;
+            int lineCounter = 0;
 
             // get line from the file
             while (getline(fs, line)) {
+                lineCounter++;
+
+                if (line.empty())
+                    continue;
 
                 rs = splitReadout(line);
                 if (!rs.isValid) {
-                    LOG_E("invalid line: " + line);
+                    LOG_E("Invalid line: " + line + ". File: " + filePath + fileName + ". Line number: " + std::to_string(lineCounter) + ".");
                     continue;
                 }
 
@@ -598,13 +603,18 @@ int DeviceTemperature::getReadoutsMonth(readouts_averaged &readouts) {
             float maxTemperature = std::numeric_limits<float>::lowest();
             int sumCounter = 0;
             readoutString rs;
+            int lineCounter = 0;
 
             // get line from the file
             while (getline(fs, line)) {
+                lineCounter++;
+
+                if (line.empty())
+                    continue;
 
                 rs = splitReadout(line);
                 if (!rs.isValid) {
-                    LOG_E("invalid line: " + line);
+                    LOG_E("Invalid line: " + line + ". File: " + filePath + fileName + ". Line number: " + std::to_string(lineCounter) + ".");
                     continue;
                 }
 
@@ -698,15 +708,18 @@ int DeviceTemperature::getReadoutsYear(readouts_averaged& readouts) {
             float maxTemperature = std::numeric_limits<float>::lowest();
             int sumCounter = 0;
             readoutString rs;
+            int lineCounter = 0;
 
             // get line from the file
             while (getline(fs, line)) {
+                lineCounter++;
+
                 if (line.empty())
                     continue;
 
                 rs = splitReadout(line);
                 if (!rs.isValid) {
-                    LOG_E("invalid line: " + line);
+                    LOG_E("Invalid line: " + line + ". File: " + filePath + fileName + ". Line number: " + std::to_string(lineCounter) + ".");
                     continue;
                 }
 
