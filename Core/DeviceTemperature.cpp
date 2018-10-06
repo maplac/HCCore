@@ -128,8 +128,8 @@ int DeviceTemperature::processMsgFromDevice(const nlohmann::json& msg, nlohmann:
             uint32_t *dataUI32 = (uint32_t*) & data;
             unsigned int receivedLostReadouts = dataUI32[6];
 
-            // if the received readouts differs for more then 30% from previous readouts
-            if (abs(currentReadout.temperature - lastReadout.temperature) > (lastReadout.temperature * 0.3)) {
+            // check for outliners
+            if (isOutliner(lastReadout.temperature, currentReadout.temperature)) {
                 std::stringstream ss;
                 ss << "Possible outliner detected: previous value = " << lastReadout.temperature;
                 ss << " degC, received value = " << currentReadout.temperature << " degC.";

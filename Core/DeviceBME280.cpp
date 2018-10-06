@@ -148,20 +148,20 @@ int DeviceBME280::processMsgFromDevice(const nlohmann::json& msg, nlohmann::json
             uint32_t *dataUI32 = (uint32_t*) & data;
             unsigned int receivedLostReadouts = dataUI32[5];
 
-            // if the received readouts differs for more then 30% from previous readouts
-            if (abs(currentReadout.temperature - lastReadout.temperature) > (lastReadout.temperature * 0.3)) {
+            // check for outliners
+            if (isOutliner(lastReadout.temperature, currentReadout.temperature)) {
                 std::stringstream ss;
                 ss << "Possible outliner detected: previous value = " << lastReadout.temperature;
                 ss << " degC, received value = " << currentReadout.temperature << " degC.";
                 LOG_W(ss.str());
             }
-            if (abs(currentReadout.pressure - lastReadout.pressure) > (lastReadout.pressure * 0.3)) {
+            if (isOutliner(lastReadout.pressure, currentReadout.pressure)) {
                 std::stringstream ss;
                 ss << "Possible outliner detected: previous value = " << lastReadout.pressure;
                 ss << " Pa, received value = " << currentReadout.pressure << " Pa.";
                 LOG_W(ss.str());
             }
-            if (abs(currentReadout.humidity - lastReadout.humidity) > (lastReadout.humidity * 0.3)) {
+            if (isOutliner(lastReadout.humidity, currentReadout.humidity)) {
                 std::stringstream ss;
                 ss << "Possible outliner detected: previous value = " << lastReadout.humidity;
                 ss << " %, received value = " << currentReadout.humidity << " %";

@@ -210,3 +210,14 @@ int DeviceGeneric::loadReadoutsBuffer() {
 std::string DeviceGeneric::getOledMessage() {
     return "";
 }
+
+bool DeviceGeneric::isOutliner(float previousValue, float currentValue) {
+    double absDiff = abs(previousValue - currentValue);
+    
+    // if the difference is more then 30 % of the previous value and the absolute difference is more than 2
+    if (absDiff > (previousValue * 0.3) && absDiff > 2) {
+        return true;
+    }else{
+        return false;
+    }
+}

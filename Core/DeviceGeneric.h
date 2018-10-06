@@ -75,6 +75,8 @@ protected:
     Interface interface;
     int pipeIndex;
     bool isWaitingForFirstData;
+    
+    bool isOutliner(float previousValue, float currentValue);
 };
 
 #endif /* DEVICEGENERIC_H */
