@@ -57,6 +57,15 @@ int DeviceBME280::setParameter(const json &parameter) {
 }
 
 nlohmann::json DeviceBME280::getDevice() {
+    json device = DeviceGeneric::getDevice();
+    device["temperature"] = lastReadout.temperature;
+    device["pressure"] = lastReadout.pressure;
+    device["humidity"] = lastReadout.humidity;
+    device["voltage"] = lastReadout.voltage;
+    return device;
+}
+
+nlohmann::json DeviceBME280::getDeviceForWeb() {
     json device = DeviceGeneric::getDeviceForWeb();
     device["temperature"] = lastReadout.temperature;
     device["pressure"] = lastReadout.pressure;
@@ -236,7 +245,7 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
             } else {
                 reply["desId"] = BROADCAST_ID;
                 reply["type"] = "pushDevice";
-                reply["device"] = getDevice();
+                reply["device"] = getDeviceForWeb();
             }
 
         } else {
@@ -247,7 +256,7 @@ int DeviceBME280::processMsgFromGui(const nlohmann::json& msg, nlohmann::json & 
     } else if (msgType.compare("pullDevice") == 0) {
         reply["desId"] = msg["srcId"];
         reply["type"] = "pushDevice";
-        reply["device"] = getDevice();
+        reply["device"] = getDeviceForWeb();
 
     } else if (msgType.compare("pullDataBuffer") == 0) {
 

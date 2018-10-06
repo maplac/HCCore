@@ -26,6 +26,7 @@ public:
     virtual ~DeviceBME280();
     
     virtual nlohmann::json getDevice();
+    virtual nlohmann::json getDeviceForWeb();
     /** 0 parameter not found, 1 parameter changed*/
     virtual int setParameter(const nlohmann::json &parameter);
 

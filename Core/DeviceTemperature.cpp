@@ -51,6 +51,13 @@ int DeviceTemperature::setParameter(const json &parameter) {
 }
 
 nlohmann::json DeviceTemperature::getDevice() {
+    json device = DeviceGeneric::getDevice();
+    device["temperature"] = lastReadout.temperature;
+    device["voltage"] = lastReadout.voltage;
+    return device;
+}
+
+nlohmann::json DeviceTemperature::getDeviceForWeb() {
     json device = DeviceGeneric::getDeviceForWeb();
     device["temperature"] = lastReadout.temperature;
     device["voltage"] = lastReadout.voltage;
@@ -200,7 +207,7 @@ int DeviceTemperature::processMsgFromGui(const nlohmann::json& msg, nlohmann::js
             } else {
                 reply["desId"] = BROADCAST_ID;
                 reply["type"] = "pushDevice";
-                reply["device"] = getDevice();
+                reply["device"] = getDeviceForWeb();
             }
 
         } else {
@@ -211,7 +218,7 @@ int DeviceTemperature::processMsgFromGui(const nlohmann::json& msg, nlohmann::js
     } else if (msgType.compare("pullDevice") == 0) {
         reply["desId"] = msg["srcId"];
         reply["type"] = "pushDevice";
-        reply["device"] = getDevice();
+        reply["device"] = getDeviceForWeb();
 
     } else if (msgType.compare("pullDataBuffer") == 0) {
 
@@ -694,7 +701,7 @@ int DeviceTemperature::getReadoutsYear(readouts_averaged& readouts) {
 
             // get line from the file
             while (getline(fs, line)) {
-                if(line.empty())
+                if (line.empty())
                     continue;
 
                 rs = splitReadout(line);
