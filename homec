@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# To run this script on boot, add the following line to /etc/rc.local
+# /home/pi/HomeControl/homec startall
+# More info at https://www.dexterindustries.com/howto/run-a-program-on-your-raspberry-pi-at-startup/
+
 BINCORE=/home/pi/HomeControl/bin/homecontrol
 BINLOGGER=/home/pi/HomeControl/bin/logger
 BINLOGVIEW=/home/pi/HomeControl/bin/logview
